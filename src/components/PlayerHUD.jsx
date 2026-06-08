@@ -8,49 +8,49 @@ export default function PlayerHUD({ health, cardsKilled, totalPaid, gridIntegrit
       <div className="hud-corner tl" />
       <div className="hud-corner br" />
       <div className="hud-content">
-        <div className="player-hud-top hud-top">
-          <div className="player-name hud-player-name">▶ THE ASSASSIN</div>
-          <div className="hud-online">OPERATIVE ONLINE</div>
-          <div className="player-stats hud-stats-row">
-            <div className="player-stat hud-stat-block">
-              <span className="player-stat-val hud-stat-val">{cardsKilled}</span>
-              <span className="player-stat-lbl hud-stat-lbl">KILLS</span>
+
+        {/* Row 1: name/status + stats */}
+        <div className="hud-top">
+          <div className="hud-identity">
+            <div className="hud-player-name">▶ THE ASSASSIN</div>
+            <div className="hud-online">OPERATIVE ONLINE</div>
+          </div>
+          <div className="hud-stats-row">
+            <div className="hud-stat-block">
+              <span className="hud-stat-val">{cardsKilled}</span>
+              <span className="hud-stat-lbl">KILLS</span>
             </div>
-            <div className="player-stat hud-stat-block">
-              <span className="player-stat-val hud-stat-val">${fmt(totalPaid)}</span>
-              <span className="player-stat-lbl hud-stat-lbl">DAMAGE DEALT</span>
+            <div className="hud-stat-block">
+              <span className="hud-stat-val">${fmt(totalPaid)}</span>
+              <span className="hud-stat-lbl">DAMAGE</span>
             </div>
-            <div className="player-stat hud-stat-block hud-clearance-block">
-              <span className="player-stat-val hud-stat-val hud-grid-val">{gridIntegrity}</span>
-              <span className="player-stat-lbl hud-stat-lbl">GRID</span>
+            <div className="hud-stat-block">
+              <span className="hud-stat-val hud-grid-val">{gridIntegrity}</span>
+              <span className="hud-stat-lbl">GRID</span>
             </div>
           </div>
         </div>
 
-        {totalDailyDamage > 0 && (
-          <div className="hud-daily-dmg">
-            ⚡ TAKING ${totalDailyDamage.toFixed(2)} DMG/DAY
+        {/* Row 2: clearance + daily damage + score gain */}
+        <div className="hud-meta-row">
+          <div className="hud-meta-pill">
+            <span className="hud-meta-lbl">CLEARANCE</span>
+            <strong className="hud-meta-val">{clearanceTier}</strong>
           </div>
-        )}
-
-        <div className="hud-clearance-strip">
-          <div>
-            <span className="hud-clearance-label">CLEARANCE</span>
-            <strong>{clearanceTier}</strong>
+          <div className="hud-meta-pill">
+            <span className="hud-meta-lbl">PROJECTED</span>
+            <strong className="hud-meta-val">{projectedScore}</strong>
           </div>
-          <div>
-            <span className="hud-clearance-label">PROJECTED</span>
-            <strong>{projectedScore}</strong>
-          </div>
+          {totalDailyDamage > 0 && (
+            <div className="hud-daily-dmg">⚡ ${totalDailyDamage.toFixed(2)}/DAY</div>
+          )}
           {scoreGain > 0 && (
-            <div className="hud-score-gain" key={scoreGain}>
-              +{scoreGain} GRID INTEGRITY
-            </div>
+            <div className="hud-score-gain" key={scoreGain}>+{scoreGain} GRID</div>
           )}
         </div>
 
+        {/* Row 3: HP + Shield bars */}
         <div className="hud-bars">
-          <div className="hud-sh-label">SHIELD</div>
           <div className="hud-bar-row">
             <span className="hud-bar-lbl hud-sh-lbl">SH</span>
             <div className="hud-bar-outer hud-sh-outer">
@@ -60,12 +60,13 @@ export default function PlayerHUD({ health, cardsKilled, totalPaid, gridIntegrit
           </div>
           <div className="hud-bar-row">
             <span className="hud-bar-lbl">HP</span>
-            <div className="health-bar-outer hud-bar-outer">
-              <div className={`health-bar-fill hud-bar-fill hud-hp-fill ${healthPct < 20 ? 'hud-critical' : ''}`} style={{ width: `${healthPct}%` }} />
+            <div className="hud-bar-outer">
+              <div className={`hud-bar-fill hud-hp-fill ${healthPct < 20 ? 'hud-critical' : ''}`} style={{ width: `${healthPct}%` }} />
             </div>
-            <span className="health-bar-label hud-bar-val">{healthPct}/100</span>
+            <span className="hud-bar-val">{healthPct}/100</span>
           </div>
         </div>
+
       </div>
     </div>
   )

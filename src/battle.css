@@ -930,37 +930,45 @@
 
 .hud-content { position: relative; z-index: 2; }
 
+/* Row 1: identity + stats — no wrapping */
 .hud-top {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
-  flex-wrap: wrap;
+}
+
+.hud-identity {
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .hud-player-name {
   font-family: var(--font-title);
   font-weight: 900;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--red);
   letter-spacing: 0.08em;
   text-shadow: var(--red-glow);
+  white-space: nowrap;
 }
 
 .hud-online {
   font-family: var(--font-body);
   font-size: 0.45rem;
   color: var(--cyan);
-  letter-spacing: 0.25em;
+  letter-spacing: 0.22em;
   opacity: 0.7;
   animation: blink 2s step-end infinite;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 
 .hud-stats-row {
   display: flex;
-  gap: 20px;
-  margin-left: auto;
-  flex-wrap: wrap;
+  gap: 14px;
+  flex-shrink: 0;
 }
 
 .hud-stat-block {
@@ -969,44 +977,55 @@
   align-items: flex-end;
   gap: 2px;
 }
-.hud-stat-val { font-family: var(--font-title); font-size: 0.9rem; color: var(--gold); }
-.hud-stat-lbl { font-size: 0.5rem; color: var(--muted); letter-spacing: 0.15em; }
+.hud-stat-val { font-family: var(--font-title); font-size: 0.85rem; color: var(--gold); white-space: nowrap; }
+.hud-stat-lbl { font-size: 0.46rem; color: var(--muted); letter-spacing: 0.15em; white-space: nowrap; }
 .hud-grid-val {
   color: var(--cyan);
   text-shadow: var(--cyan-glow);
 }
 
-.hud-clearance-strip {
+/* Row 2: clearance + status pills */
+.hud-meta-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 6px 0 14px;
+  gap: 8px;
   flex-wrap: wrap;
+  margin: 0 0 12px;
+  padding: 7px 0;
+  border-top: 1px solid rgba(0,245,255,0.1);
+  border-bottom: 1px solid rgba(0,245,255,0.1);
 }
 
-.hud-clearance-strip > div {
-  border: 1px solid rgba(0,245,255,0.16);
-  background: rgba(0,245,255,0.035);
-  padding: 6px 10px;
+.hud-meta-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid rgba(0,245,255,0.18);
+  background: rgba(0,245,255,0.03);
   clip-path: var(--clip-sm);
 }
 
-.hud-clearance-label {
-  display: block;
-  margin-bottom: 3px;
+.hud-meta-lbl {
   font-family: var(--font-body);
-  font-size: 0.5rem;
+  font-size: 0.46rem;
   color: var(--muted);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
 }
 
-.hud-clearance-strip strong {
+.hud-meta-val {
   font-family: var(--font-title);
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--cyan);
   letter-spacing: 0.1em;
   text-shadow: var(--cyan-glow);
+  white-space: nowrap;
 }
+
+/* Keep old clearance classes for any legacy refs */
+.hud-clearance-label { display: none; }
+.hud-clearance-strip { display: none; }
 
 .hud-daily-dmg {
   font-family: var(--font-body);
@@ -1056,16 +1075,6 @@
   flex-shrink: 0;
 }
 .hud-bar-lbl.hud-sh-lbl { color: #00ffff; opacity: 0.9; }
-
-.hud-sh-label {
-  font-family: var(--font-body);
-  font-size: 8px;
-  color: #00ffff;
-  letter-spacing: 0.18em;
-  opacity: 0.7;
-  margin-bottom: 2px;
-  padding-left: 22px;
-}
 
 .hud-bar-outer {
   flex: 1;
@@ -1231,7 +1240,7 @@
   .dc-villain-name { font-size: 1rem; }
   .dc-bar-num { min-width: 34px; }
 
-  .hud-stats-row { display: none; }
+  .hud-stat-val { font-size: 0.75rem; }
   .hud-score-gain { margin-left: 0; width: 100%; }
 }
 
