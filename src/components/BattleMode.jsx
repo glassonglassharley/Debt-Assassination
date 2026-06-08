@@ -46,9 +46,9 @@ export default function BattleMode({ store, addToast }) {
   }, [triggerFlash])
 
   const addKillFeed = useCallback((debt, amount, eliminated) => {
-    const villain = VILLAIN_DATA[debt.id]
+    const villainName = debt.enemyName || VILLAIN_DATA[debt.id].name
     const id = Date.now() + Math.random()
-    const msg = `YOU DEALT $${amount.toFixed(2)} TO ${villain.name}${eliminated ? ' · ELIMINATED' : ''}`
+    const msg = `YOU DEALT $${amount.toFixed(2)} TO ${villainName}${eliminated ? ' · ELIMINATED' : ''}`
     setKillFeed(prev => [{ id, msg, eliminated }, ...prev].slice(0, 5))
     setTimeout(() => setKillFeed(prev => prev.filter(item => item.id !== id)), 4000)
   }, [])
@@ -56,6 +56,11 @@ export default function BattleMode({ store, addToast }) {
   const handleAttack = useCallback((debt) => {
     setAttackingDebt(debt)
   }, [])
+
+  const handleRename = useCallback((debtId, name) => {
+    store.updateEnemyName(debtId, name)
+    addToast('TARGET NAME UPDATED', 'gold')
+  }, [store, addToast])
 
   const handlePayment = useCallback((debtId, amount) => {
     const debt = store.debts.find(d => d.id === debtId)
@@ -72,7 +77,7 @@ export default function BattleMode({ store, addToast }) {
       addToast('ENEMY ELIMINATED', 'gold')
       setLootDrops(prev => [{
         id: Date.now() + Math.random(),
-        label: `${VILLAIN_DATA[debt.id].name} LOOT DROP`,
+        label: `${debt.enemyName || VILLAIN_DATA[debt.id].name} LOOT DROP`,
         amount: debt.minPayment || 0,
       }, ...prev].slice(0, 5))
       setTimeout(() => setShowConfetti(false), 3500)
@@ -179,6 +184,7 @@ export default function BattleMode({ store, addToast }) {
             isTarget={true}
             featured={true}
             onAttack={handleAttack}
+            onRename={handleRename}
             extraClass={cardAnimMap[featuredDebt.id] || ''}
           />
         </div>
@@ -202,6 +208,7 @@ export default function BattleMode({ store, addToast }) {
                   isTarget={false}
                   featured={false}
                   onAttack={handleAttack}
+                  onRename={handleRename}
                   extraClass={cardAnimMap[debt.id] || ''}
                 />
               ))}

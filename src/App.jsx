@@ -202,7 +202,7 @@ export default function App() {
         </main>
       ) : (
         <>
-          <div style={{ position: 'relative', zIndex: 10, maxWidth: '900px', margin: '0 auto', padding: '24px 16px 0' }}>
+          <div className="battle-shell-header">
             <div className="view-toggle">
               <button className="view-toggle-btn" onClick={() => store.setViewMode('dashboard')}>DASHBOARD</button>
               <button className="view-toggle-btn active">BATTLE MODE</button>

@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import VillainPortrait from './VillainPortrait'
 import { VILLAIN_DATA, VILLAIN_TAUNTS } from '../constants'
 
@@ -27,8 +27,16 @@ function getAttackTier(amount) {
 
 export { getAttackTier }
 
-export default function EnemyCard({ debt, isTarget, featured, onAttack, extraClass }) {
-  const info = VILLAIN_DATA[debt.id]
+export default function EnemyCard({ debt, isTarget, featured, onAttack, onRename, extraClass }) {
+  const defaultInfo = VILLAIN_DATA[debt.id]
+  const displayName = debt.enemyName || defaultInfo.name
+  const info = { ...defaultInfo, name: displayName }
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [draftName, setDraftName] = useState(displayName)
+
+  useEffect(() => {
+    if (!isEditingName) setDraftName(displayName)
+  }, [displayName, isEditingName])
   const eliminated = debt.balance <= 0
   const isBoss = debt.id === 12
 
@@ -38,12 +46,14 @@ export default function EnemyCard({ debt, isTarget, featured, onAttack, extraCla
     : Math.max(0, Math.min(100, ((debt.limit - debt.balance) / debt.limit) * 100))
 
   const threat = getThreat(debt)
+  const threatPips = { low: 1, medium: 2, high: 3, critical: 4 }[threat] || 1
   const taunt = eliminated
     ? `${info.name} has been deleted.`
     : getTauntLine(debt)
 
   const isOverLimit = debt.balance > debt.limit
   const dailyInterest = debt.apr ? ((debt.apr / 100) / 365) * debt.balance : null
+  const utilization = debt.limit > 0 ? (debt.balance / debt.limit) * 100 : 0
   const lowHealth = healthPct < 20 && !eliminated
 
   const idfmt = String((debt.id * 7919 + 4337) % 10000).padStart(4, '0')
@@ -57,6 +67,26 @@ export default function EnemyCard({ debt, isTarget, featured, onAttack, extraCla
   const handleAttack = useCallback(() => {
     onAttack(debt)
   }, [debt, onAttack])
+
+  const saveName = useCallback(() => {
+    onRename?.(debt.id, draftName)
+    setIsEditingName(false)
+  }, [debt.id, draftName, onRename])
+
+  const resetName = useCallback(() => {
+    const originalName = defaultInfo.name
+    setDraftName(originalName)
+    onRename?.(debt.id, originalName)
+    setIsEditingName(false)
+  }, [debt.id, defaultInfo.name, onRename])
+
+  const handleNameKeyDown = useCallback((event) => {
+    if (event.key === 'Enter') saveName()
+    if (event.key === 'Escape') {
+      setDraftName(displayName)
+      setIsEditingName(false)
+    }
+  }, [displayName, saveName])
 
   const tierClass = isBoss ? 'dc-tier-boss' : debt.phase === 1 ? 'dc-tier-grunt' : debt.phase === 2 ? 'dc-tier-mid' : 'dc-tier-heavy'
 
@@ -90,6 +120,11 @@ export default function EnemyCard({ debt, isTarget, featured, onAttack, extraCla
       <div className="dc-header">
         <span className="dc-classified">◉ CLASSIFIED</span>
         <span className="dc-target-id">TARGET.{String(debt.id).padStart(2, '0')}</span>
+        <span className="dc-threat-runes" aria-label={`${threatPips} threat pips`}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <span key={i} className={i < threatPips ? 'active' : ''} />
+          ))}
+        </span>
         <span className={`dc-threat-pill tl-${threat}`}>{threat.toUpperCase()}</span>
       </div>
 
@@ -109,9 +144,59 @@ export default function EnemyCard({ debt, isTarget, featured, onAttack, extraCla
 
         {/* Intel column */}
         <div className="dc-intel-col">
-          <div className="dc-villain-name">{info.name}</div>
+          <div className="dc-name-row">
+            {isEditingName ? (
+              <div className="dc-name-editor">
+                <input
+                  className="dc-name-input"
+                  value={draftName}
+                  maxLength={32}
+                  aria-label={`Edit enemy name for ${defaultInfo.name}`}
+                  onChange={event => setDraftName(event.target.value)}
+                  onKeyDown={handleNameKeyDown}
+                  autoFocus
+                />
+                <button className="dc-name-action" type="button" onClick={saveName}>SAVE</button>
+                <button className="dc-name-action muted" type="button" onClick={() => { setDraftName(displayName); setIsEditingName(false) }}>CANCEL</button>
+                <button className="dc-name-action muted" type="button" onClick={resetName}>RESET</button>
+              </div>
+            ) : (
+              <>
+                <div className="dc-villain-name">{info.name}</div>
+                <button
+                  className="dc-edit-name-btn"
+                  type="button"
+                  onClick={() => setIsEditingName(true)}
+                  aria-label={`Edit enemy name for ${info.name}`}
+                >
+                  ✎ NAME
+                </button>
+              </>
+            )}
+          </div>
           <div className="dc-villain-class"><span className="rank-patch">CLASS</span> {info.villainClass}</div>
           <div className="dc-flavor-line">{info.flavor}</div>
+
+          {(featured || isBoss || debt.phase === 3) && (
+            <div className="dc-stat-grid" aria-label={`${info.name} tactical statistics`}>
+              <div className="dc-stat-tile">
+                <span>THREAT</span>
+                <strong>{threat.toUpperCase()}</strong>
+              </div>
+              <div className="dc-stat-tile">
+                <span>BALANCE</span>
+                <strong>${debt.balance.toFixed(0)}</strong>
+              </div>
+              <div className="dc-stat-tile">
+                <span>UTIL</span>
+                <strong>{utilization.toFixed(0)}%</strong>
+              </div>
+              <div className="dc-stat-tile">
+                <span>DAMAGE</span>
+                <strong>{dailyInterest ? `$${dailyInterest.toFixed(2)}/DAY` : 'APR ?'}</strong>
+              </div>
+            </div>
+          )}
 
           {isBoss && !eliminated && (
             <div className="boss-phase-stack" aria-label="Final boss phase integrity">
@@ -164,7 +249,19 @@ export default function EnemyCard({ debt, isTarget, featured, onAttack, extraCla
       </div>
 
       {/* DELETED stamp */}
-      {eliminated && <div className="dc-deleted-stamp">DELETED</div>}
+      {eliminated && (
+        <>
+          <div className="dc-delete-fragments" aria-hidden="true">
+            {Array.from({ length: 10 }).map((_, i) => <span key={i} />)}
+          </div>
+          <div className="dc-deleted-core" aria-hidden="true">
+            <span className="dc-skull-eye left" />
+            <span className="dc-skull-eye right" />
+            <span className="dc-skull-jaw" />
+          </div>
+          <div className="dc-deleted-stamp">DELETED</div>
+        </>
+      )}
 
       {/* Attack footer */}
       {!eliminated && (

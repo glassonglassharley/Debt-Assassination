@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { ORIGINAL_DEBTS, TOTAL_ORIGINAL_DEBT } from '../constants'
+import { ORIGINAL_DEBTS, TOTAL_ORIGINAL_DEBT, VILLAIN_DATA } from '../constants'
 
 const STORAGE_KEY = 'debt-assassination-v1'
 
@@ -16,18 +16,30 @@ function saveState(s) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)) } catch {}
 }
 
+function withEnemyNames(debts) {
+  return debts.map(d => ({
+    ...d,
+    enemyName: typeof d.enemyName === 'string' && d.enemyName.trim()
+      ? d.enemyName
+      : VILLAIN_DATA[d.id]?.name ?? d.lender,
+  }))
+}
+
 function buildInitialDebts() {
   return ORIGINAL_DEBTS.map(d => ({
     ...d,
     balance: d.originalBalance,
     minPayment: null,
     apr: null,
+    enemyName: VILLAIN_DATA[d.id]?.name ?? d.lender,
   }))
 }
 
 function getInitialState() {
   const saved = loadState()
-  if (saved?.debts?.length === ORIGINAL_DEBTS.length) return saved
+  if (saved?.debts?.length === ORIGINAL_DEBTS.length) {
+    return { ...saved, debts: withEnemyNames(saved.debts) }
+  }
   return {
     debts: buildInitialDebts(),
     paymentHistory: [],
@@ -109,6 +121,18 @@ export function useDebtStore() {
     persist({ ...state, debts: newDebts })
   }
 
+  function updateEnemyName(debtId, name) {
+    const fallback = VILLAIN_DATA[debtId]?.name ?? 'UNKNOWN TARGET'
+    const cleaned = String(name || '')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .slice(0, 32)
+    const newDebts = state.debts.map(d =>
+      d.id === debtId ? { ...d, enemyName: cleaned || fallback } : d
+    )
+    persist({ ...state, debts: newDebts })
+  }
+
   function markMilestoneShown(milestone) {
     const allBelow = [25, 50, 75, 100].filter(m => m <= milestone)
     const newShown = [...new Set([...state.milestonesShown, ...allBelow])]
@@ -160,6 +184,7 @@ export function useDebtStore() {
     editBalance,
     updateMinPayment,
     updateAPR,
+    updateEnemyName,
     markMilestoneShown,
     setViewMode,
     logCounterattack,
