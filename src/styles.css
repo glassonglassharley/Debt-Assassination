@@ -1814,7 +1814,7 @@ input { font-family: inherit; }
 .hamburger-btn {
   position: fixed;
   top: 16px;
-  right: 16px;
+  left: 16px;
   z-index: 151;
   width: 44px;
   height: 44px;
@@ -1863,17 +1863,17 @@ input { font-family: inherit; }
 .side-drawer {
   position: fixed;
   top: 0;
-  right: 0;
+  left: 0;
   bottom: 0;
   width: min(380px, 92vw);
   background:
     linear-gradient(160deg, rgba(255, 0, 60, 0.04), rgba(0, 4, 20, 0.98)),
     #040408;
-  border-left: 1px solid rgba(255, 0, 60, 0.3);
+  border-right: 1px solid rgba(255, 0, 60, 0.3);
   z-index: 150;
   display: flex;
   flex-direction: column;
-  transform: translateX(100%);
+  transform: translateX(-100%);
   transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   overflow: hidden;
 }
@@ -1882,11 +1882,11 @@ input { font-family: inherit; }
   transform: translateX(0);
 }
 
-/* Glow edge on the left border */
+/* Glow edge on the right border */
 .side-drawer::before {
   content: '';
   position: absolute;
-  top: 0; left: -1px; bottom: 0;
+  top: 0; right: -1px; bottom: 0;
   width: 1px;
   background: linear-gradient(to bottom, transparent, var(--red), transparent);
   opacity: 0.5;

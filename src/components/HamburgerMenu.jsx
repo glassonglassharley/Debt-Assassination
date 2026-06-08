@@ -125,7 +125,7 @@ export default function HamburgerMenu() {
 
   return (
     <>
-      {/* Hamburger button — fixed top-right */}
+      {/* Hamburger button — fixed top-left */}
       <button
         className={`hamburger-btn ${open ? 'hb-open' : ''}`}
         onClick={() => setOpen(o => !o)}
