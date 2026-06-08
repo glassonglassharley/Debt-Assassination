@@ -155,8 +155,12 @@ export function useDebtStore() {
     const freedUpMinimums = state.debts
       .filter(d => d.balance <= 0 && d.minPayment)
       .reduce((s, d) => s + (d.minPayment || 0), 0)
+    const totalDailyInterest = state.debts.reduce((sum, d) => {
+      if (!d.apr || d.balance <= 0) return sum
+      return sum + ((d.apr / 100) / 365) * d.balance
+    }, 0)
     const scoreMetrics = getScoreMetrics(state.debts, state.creditScore)
-    return { totalOriginalDebt, totalRemaining, totalPaid, cardsKilled, percentComplete, activeTarget, rankedDebts, freedUpMinimums, ...scoreMetrics }
+    return { totalOriginalDebt, totalRemaining, totalPaid, cardsKilled, percentComplete, activeTarget, rankedDebts, freedUpMinimums, totalDailyInterest, totalDailyDamage: totalDailyInterest, ...scoreMetrics }
   }, [state.debts, state.creditScore])
 
   function makePayment(debtId, amount) {

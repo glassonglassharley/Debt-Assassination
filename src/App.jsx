@@ -7,6 +7,7 @@ import DebtRow from './components/DebtRow'
 import PaymentModal from './components/PaymentModal'
 import EditBalanceModal from './components/EditBalanceModal'
 import AddDebtModal from './components/AddDebtModal'
+import AprModal from './components/AprModal'
 import PaymentHistory from './components/PaymentHistory'
 import MilestoneOverlay from './components/MilestoneOverlay'
 import Confetti from './components/Confetti'
@@ -29,6 +30,7 @@ export default function App() {
   const [resetConfirm, setResetConfirm] = useState(false)
   const [syncScoreOpen, setSyncScoreOpen] = useState(false)
   const [addDebtOpen, setAddDebtOpen] = useState(false)
+  const [aprDebt, setAprDebt] = useState(null)
 
   // Milestone trigger
   useEffect(() => {
@@ -118,6 +120,16 @@ export default function App() {
           onClose={() => setAddDebtOpen(false)}
         />
       )}
+      {aprDebt && (
+        <AprModal
+          debt={aprDebt}
+          onSave={(id, apr) => {
+            store.updateAPR(id, apr)
+            addToast(apr ? `APR SET: ${apr}%` : 'APR CLEARED', 'gold')
+          }}
+          onClose={() => setAprDebt(null)}
+        />
+      )}
       {syncScoreOpen && (
         <SyncScoreModal
           currentScore={store.creditScore}
@@ -159,6 +171,7 @@ export default function App() {
             cardsKilled={store.cardsKilled}
             totalCards={store.debts.length}
             freedUp={store.freedUpMinimums}
+            totalDailyInterest={store.totalDailyInterest}
           />
 
           <ClearanceLevelPanel
@@ -211,7 +224,7 @@ export default function App() {
                     onPay={() => setPayingDebt(debt)}
                     onEdit={() => setEditingDebt(debt)}
                     onUpdateMinPayment={amt => store.updateMinPayment(debt.id, amt)}
-                    onUpdateAPR={apr => store.updateAPR(debt.id, apr)}
+                    onSetApr={setAprDebt}
                   />
                 ))}
               </div>

@@ -229,6 +229,29 @@ input { font-family: inherit; }
 
 .stat-value.gold { color: var(--gold); }
 
+.stats-row-four {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.bleeding-card {
+  border-color: rgba(255, 0, 60, 0.3);
+  background: rgba(255, 0, 60, 0.06);
+}
+
+@keyframes bleed-pulse {
+  from { text-shadow: 0 0 6px rgba(255, 0, 60, 0.6); }
+  to   { text-shadow: 0 0 14px rgba(255, 0, 60, 0.9), 0 0 28px rgba(255, 0, 60, 0.4); }
+}
+
+.bleeding-val {
+  color: var(--red);
+  animation: bleed-pulse 1.4s ease-in-out infinite alternate;
+}
+
+.bleeding-empty {
+  color: var(--muted);
+}
+
 /* ===================== CLEARANCE LEVEL ===================== */
 .clearance-panel {
   display: grid;
@@ -639,6 +662,30 @@ input { font-family: inherit; }
 }
 .debt-balance.is-active-bal { animation: pulse-glow 1.8s ease-in-out infinite alternate; }
 
+.debt-balance-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.debt-apr-badge {
+  font-family: var(--font-body);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.debt-daily-badge {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--red);
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
 .debt-bar-outer {
   background: rgba(255, 0, 60, 0.1);
   height: 5px;
@@ -937,6 +984,38 @@ input { font-family: inherit; }
 }
 .btn-modal-execute:hover { box-shadow: 0 0 18px var(--red); }
 .btn-modal-execute:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ===================== APR MODAL ===================== */
+.apr-modal-title {
+  font-family: var(--font-title);
+  font-weight: 900;
+  font-size: 1.4rem;
+  color: var(--red);
+  letter-spacing: 4px;
+  margin-bottom: 4px;
+}
+
+.apr-modal-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--white);
+  letter-spacing: 0.1em;
+  margin-bottom: 18px;
+  opacity: 0.85;
+}
+
+.apr-input {
+  color: var(--gold) !important;
+  font-family: var(--font-title) !important;
+  font-weight: 700 !important;
+}
+
+.apr-input::placeholder {
+  color: rgba(201, 168, 76, 0.35) !important;
+  font-family: var(--font-body) !important;
+  font-weight: 400 !important;
+  font-size: 0.65rem !important;
+}
 
 /* ===================== PAYMENT HISTORY ===================== */
 .history-section {
@@ -1598,6 +1677,7 @@ input { font-family: inherit; }
   }
 
   .stats-row { gap: 8px; }
+  .stats-row-four { grid-template-columns: repeat(2, 1fr); }
   .stat-card { padding: 12px 8px; }
   .stat-value { font-size: 0.85rem; }
   .stat-label { font-size: 0.5rem; }

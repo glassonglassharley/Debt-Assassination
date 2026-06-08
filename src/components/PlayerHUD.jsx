@@ -1,4 +1,4 @@
-export default function PlayerHUD({ health, cardsKilled, totalPaid, gridIntegrity, clearanceTier, projectedScore, scoreGain }) {
+export default function PlayerHUD({ health, cardsKilled, totalPaid, gridIntegrity, clearanceTier, projectedScore, scoreGain, totalDailyDamage }) {
   const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const healthPct = Math.max(0, Math.min(100, health))
   const shieldPct = Math.min(100, 35 + cardsKilled * 5)
@@ -26,6 +26,12 @@ export default function PlayerHUD({ health, cardsKilled, totalPaid, gridIntegrit
             </div>
           </div>
         </div>
+
+        {totalDailyDamage > 0 && (
+          <div className="hud-daily-dmg">
+            ⚡ TAKING ${totalDailyDamage.toFixed(2)} DMG/DAY
+          </div>
+        )}
 
         <div className="hud-clearance-strip">
           <div>

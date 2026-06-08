@@ -159,6 +159,7 @@ export default function BattleMode({ store, addToast }) {
         clearanceTier={store.clearanceTier}
         projectedScore={store.projectedScore}
         scoreGain={scoreGain}
+        totalDailyDamage={store.totalDailyDamage}
       />
 
       <section className="battle-command-strip" aria-label="Battle command metrics">

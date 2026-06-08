@@ -1,10 +1,8 @@
 import { useState } from 'react'
 
-export default function DebtRow({ debt, rank, isActive, onPay, onEdit, onUpdateMinPayment, onUpdateAPR }) {
+export default function DebtRow({ debt, rank, isActive, onPay, onEdit, onUpdateMinPayment, onSetApr }) {
   const [editMin, setEditMin] = useState(false)
-  const [editAPR, setEditAPR] = useState(false)
   const [minVal, setMinVal] = useState('')
-  const [aprVal, setAprVal] = useState('')
 
   const isPaid = debt.balance <= 0
   const isOverLimit = debt.balance > debt.limit
@@ -18,11 +16,6 @@ export default function DebtRow({ debt, rank, isActive, onPay, onEdit, onUpdateM
     onUpdateMinPayment(minVal)
     setEditMin(false)
     setMinVal('')
-  }
-  const saveAPR = () => {
-    onUpdateAPR(aprVal)
-    setEditAPR(false)
-    setAprVal('')
   }
 
   if (isPaid) {
@@ -56,9 +49,17 @@ export default function DebtRow({ debt, rank, isActive, onPay, onEdit, onUpdateM
         <div className="debt-lender-block">
           <span className="debt-lender">{debt.lender}</span>
         </div>
-        <span className={`debt-balance ${isActive ? 'is-active-bal' : ''}`}>
-          ${debt.balance.toFixed(2)}
-        </span>
+        <div className="debt-balance-col">
+          <span className={`debt-balance ${isActive ? 'is-active-bal' : ''}`}>
+            ${debt.balance.toFixed(2)}
+          </span>
+          {debt.apr != null && (
+            <span className="debt-apr-badge">{debt.apr}% APR</span>
+          )}
+          {dailyInterest !== null && (
+            <span className="debt-daily-badge">~${dailyInterest.toFixed(2)}/day</span>
+          )}
+        </div>
       </div>
 
       <div className="debt-bar-outer">
@@ -74,9 +75,6 @@ export default function DebtRow({ debt, rank, isActive, onPay, onEdit, onUpdateM
           <span className="debt-stat-val">{pctUtil.toFixed(1)}%</span>
           <span className="debt-stat-lbl">UTIL</span>
         </div>
-        {dailyInterest !== null && (
-          <span className="debt-daily">~${dailyInterest.toFixed(2)}/day</span>
-        )}
         {debt.minPayment && !editMin && (
           <span className="debt-min-chip" style={{ marginLeft: 'auto' }}>
             MIN ${debt.minPayment}/mo
@@ -113,26 +111,9 @@ export default function DebtRow({ debt, rank, isActive, onPay, onEdit, onUpdateM
           </button>
         )}
 
-        {editAPR ? (
-          <div className="inline-edit-wrap">
-            <input
-              className="inline-input"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="APR %"
-              value={aprVal}
-              onChange={e => setAprVal(e.target.value)}
-              autoFocus
-              onKeyDown={e => e.key === 'Enter' && saveAPR()}
-            />
-            <button className="btn-inline-save" onClick={saveAPR}>✓</button>
-          </div>
-        ) : (
-          <button className="btn-chip" onClick={() => { setAprVal(debt.apr || ''); setEditAPR(true) }}>
-            {debt.apr ? `✎ ${debt.apr}% APR` : '+ APR'}
-          </button>
-        )}
+        <button className="btn-chip" onClick={() => onSetApr?.(debt)}>
+          {debt.apr != null ? `✎ ${debt.apr}% APR` : '+ APR'}
+        </button>
       </div>
     </div>
   )

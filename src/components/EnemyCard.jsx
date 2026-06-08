@@ -200,7 +200,7 @@ export default function EnemyCard({ debt, isTarget, featured, onAttack, onRename
               </div>
               <div className="dc-stat-tile">
                 <span>DAMAGE</span>
-                <strong>{dailyInterest ? `$${dailyInterest.toFixed(2)}/DAY` : 'APR ?'}</strong>
+                <strong>{dailyInterest ? `$${dailyInterest.toFixed(2)}/DAY` : debt.apr ? `$${((debt.apr / 100 / 365) * debt.balance).toFixed(2)}/DAY` : '—'}</strong>
               </div>
             </div>
           )}
@@ -241,6 +241,7 @@ export default function EnemyCard({ debt, isTarget, featured, onAttack, onRename
           {/* Intel tags */}
           <div className="dc-intel-tags">
             {isOverLimit && <span className="dc-tag raging-tag">RAGING</span>}
+            {debt.apr != null && <span className="dc-tag apr-tag">{debt.apr}% APR</span>}
             {dailyInterest && (
               <span className="dc-tag dmg-tag">⚡ ${dailyInterest.toFixed(2)}/day</span>
             )}
