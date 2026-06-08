@@ -9,6 +9,7 @@ import EditBalanceModal from './components/EditBalanceModal'
 import AddDebtModal from './components/AddDebtModal'
 import AprModal from './components/AprModal'
 import HamburgerMenu from './components/HamburgerMenu'
+import OnboardingModal from './components/OnboardingModal'
 import PaymentHistory from './components/PaymentHistory'
 import MilestoneOverlay from './components/MilestoneOverlay'
 import Confetti from './components/Confetti'
@@ -32,6 +33,9 @@ export default function App() {
   const [syncScoreOpen, setSyncScoreOpen] = useState(false)
   const [addDebtOpen, setAddDebtOpen] = useState(false)
   const [aprDebt, setAprDebt] = useState(null)
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try { return !localStorage.getItem('hasSeenOnboarding') } catch { return false }
+  })
 
   // Milestone trigger
   useEffect(() => {
@@ -80,7 +84,17 @@ export default function App() {
     <>
       <GridBg />
       <div className="crt-overlay" />
-      <HamburgerMenu />
+      <HamburgerMenu
+        addToast={addToast}
+        onImport={store.importState}
+        onShowIntro={() => setShowOnboarding(true)}
+      />
+      {showOnboarding && (
+        <OnboardingModal onDismiss={() => {
+          try { localStorage.setItem('hasSeenOnboarding', '1') } catch {}
+          setShowOnboarding(false)
+        }} />
+      )}
 
       {showConfetti && <Confetti />}
 

@@ -324,6 +324,29 @@ export function useDebtStore() {
     persist({ ...state, debts: newDebts, paymentHistory: newHistory, playerHealth: newHealth })
   }
 
+  function importState(rawJson) {
+    try {
+      const parsed = JSON.parse(rawJson)
+      if (!Array.isArray(parsed.debts)) return false
+      const normalized = {
+        ...parsed,
+        debts: withEnemyNames(parsed.debts),
+        creditScore: Number.isFinite(Number(parsed.creditScore)) ? Number(parsed.creditScore) : DEFAULT_CREDIT_SCORE,
+        lastSynced: parsed.lastSynced || DEFAULT_LAST_SYNCED,
+        scoreHistory: Array.isArray(parsed.scoreHistory) ? parsed.scoreHistory : [],
+        paymentHistory: Array.isArray(parsed.paymentHistory) ? parsed.paymentHistory : [],
+        milestonesShown: Array.isArray(parsed.milestonesShown) ? parsed.milestonesShown : [],
+        playerHealth: Number.isFinite(Number(parsed.playerHealth)) ? Number(parsed.playerHealth) : 100,
+        viewMode: parsed.viewMode || 'dashboard',
+        installDate: parsed.installDate ?? Date.now(),
+      }
+      persist(normalized)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   function reset() {
     persist({
       debts: buildInitialDebts(),
@@ -350,6 +373,7 @@ export function useDebtStore() {
     installDate: state.installDate,
     lastSynced: state.lastSynced || DEFAULT_LAST_SYNCED,
     ...derived,
+    importState,
     makePayment,
     editBalance,
     updateMinPayment,
