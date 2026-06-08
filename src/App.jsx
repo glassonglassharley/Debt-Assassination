@@ -10,6 +10,8 @@ import PaymentHistory from './components/PaymentHistory'
 import MilestoneOverlay from './components/MilestoneOverlay'
 import Confetti from './components/Confetti'
 import BattleMode from './components/BattleMode'
+import ClearanceLevelPanel from './components/ClearanceLevelPanel'
+import SyncScoreModal from './components/SyncScoreModal'
 import { useDebtStore } from './hooks/useDebtStore'
 import { PHASES } from './constants'
 
@@ -24,6 +26,7 @@ export default function App() {
   const [pendingMilestone, setPendingMilestone] = useState(null)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [resetConfirm, setResetConfirm] = useState(false)
+  const [syncScoreOpen, setSyncScoreOpen] = useState(false)
 
   // Milestone trigger
   useEffect(() => {
@@ -104,6 +107,17 @@ export default function App() {
           onClose={() => setEditingDebt(null)}
         />
       )}
+      {syncScoreOpen && (
+        <SyncScoreModal
+          currentScore={store.creditScore}
+          onSync={score => {
+            store.syncCreditScore(score)
+            setSyncScoreOpen(false)
+            addToast('GRID BASELINE SYNCED', 'gold')
+          }}
+          onClose={() => setSyncScoreOpen(false)}
+        />
+      )}
 
       {isDashboard ? (
         <main className="app-main">
@@ -133,6 +147,17 @@ export default function App() {
             totalPaid={store.totalPaid}
             cardsKilled={store.cardsKilled}
             freedUp={store.freedUpMinimums}
+          />
+
+          <ClearanceLevelPanel
+            gridIntegrity={store.gridIntegrity}
+            projectedScore={store.projectedScore}
+            clearanceTier={store.clearanceTier}
+            nextClearanceTier={store.nextClearanceTier}
+            progressToNext={store.progressToNext}
+            lastSynced={store.lastSynced}
+            highUtilizationCount={store.highUtilizationCount}
+            onSync={() => setSyncScoreOpen(true)}
           />
 
           <ProgressBar percent={store.percentComplete} totalPaid={store.totalPaid} />

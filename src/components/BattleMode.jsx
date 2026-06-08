@@ -23,6 +23,7 @@ export default function BattleMode({ store, addToast }) {
   const [showVictory, setShowVictory] = useState(false)
   const [killFeed, setKillFeed] = useState([])
   const [lootDrops, setLootDrops] = useState([])
+  const [scoreGain, setScoreGain] = useState(0)
   const arenaRef = useRef(null)
 
   const allDead = store.debts.every(d => d.balance <= 0)
@@ -71,6 +72,11 @@ export default function BattleMode({ store, addToast }) {
     setAttackingDebt(null)
     addKillFeed(debt, Math.min(amount, debt.balance), Boolean(result?.cardKilled))
     addToast(`HIT: -$${amount.toFixed(2)}`, 'red')
+    if (result?.gridGain > 0) {
+      setScoreGain(result.gridGain)
+      addToast(`+${result.gridGain} GRID INTEGRITY`, 'gold')
+      setTimeout(() => setScoreGain(0), 2200)
+    }
 
     if (result?.cardKilled) {
       setShowConfetti(true)
@@ -149,6 +155,10 @@ export default function BattleMode({ store, addToast }) {
         health={store.playerHealth}
         cardsKilled={store.cardsKilled}
         totalPaid={store.totalPaid}
+        gridIntegrity={store.gridIntegrity}
+        clearanceTier={store.clearanceTier}
+        projectedScore={store.projectedScore}
+        scoreGain={scoreGain}
       />
 
       <section className="battle-command-strip" aria-label="Battle command metrics">

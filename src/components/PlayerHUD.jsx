@@ -1,4 +1,4 @@
-export default function PlayerHUD({ health, cardsKilled, totalPaid }) {
+export default function PlayerHUD({ health, cardsKilled, totalPaid, gridIntegrity, clearanceTier, projectedScore, scoreGain }) {
   const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const healthPct = Math.max(0, Math.min(100, health))
   const shieldPct = Math.min(100, 35 + cardsKilled * 5)
@@ -20,7 +20,27 @@ export default function PlayerHUD({ health, cardsKilled, totalPaid }) {
               <span className="player-stat-val hud-stat-val">${fmt(totalPaid)}</span>
               <span className="player-stat-lbl hud-stat-lbl">DAMAGE DEALT</span>
             </div>
+            <div className="player-stat hud-stat-block hud-clearance-block">
+              <span className="player-stat-val hud-stat-val hud-grid-val">{gridIntegrity}</span>
+              <span className="player-stat-lbl hud-stat-lbl">GRID</span>
+            </div>
           </div>
+        </div>
+
+        <div className="hud-clearance-strip">
+          <div>
+            <span className="hud-clearance-label">CLEARANCE</span>
+            <strong>{clearanceTier}</strong>
+          </div>
+          <div>
+            <span className="hud-clearance-label">PROJECTED</span>
+            <strong>{projectedScore}</strong>
+          </div>
+          {scoreGain > 0 && (
+            <div className="hud-score-gain" key={scoreGain}>
+              +{scoreGain} GRID INTEGRITY
+            </div>
+          )}
         </div>
 
         <div className="hud-bars">
