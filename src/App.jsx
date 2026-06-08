@@ -6,6 +6,7 @@ import PhaseHeader from './components/PhaseHeader'
 import DebtRow from './components/DebtRow'
 import PaymentModal from './components/PaymentModal'
 import EditBalanceModal from './components/EditBalanceModal'
+import AddDebtModal from './components/AddDebtModal'
 import PaymentHistory from './components/PaymentHistory'
 import MilestoneOverlay from './components/MilestoneOverlay'
 import Confetti from './components/Confetti'
@@ -27,6 +28,7 @@ export default function App() {
   const [historyOpen, setHistoryOpen] = useState(false)
   const [resetConfirm, setResetConfirm] = useState(false)
   const [syncScoreOpen, setSyncScoreOpen] = useState(false)
+  const [addDebtOpen, setAddDebtOpen] = useState(false)
 
   // Milestone trigger
   useEffect(() => {
@@ -75,7 +77,6 @@ export default function App() {
     <>
       <GridBg />
       <div className="crt-overlay" />
-      <div className="scanline-beam" />
 
       {showConfetti && <Confetti />}
 
@@ -107,6 +108,16 @@ export default function App() {
           onClose={() => setEditingDebt(null)}
         />
       )}
+      {addDebtOpen && (
+        <AddDebtModal
+          onAdd={(payload) => {
+            const added = store.addDebt(payload)
+            setAddDebtOpen(false)
+            addToast(added ? `TARGET ADDED: ${added.enemyName}` : 'TARGET ADD FAILED', added ? 'gold' : 'red')
+          }}
+          onClose={() => setAddDebtOpen(false)}
+        />
+      )}
       {syncScoreOpen && (
         <SyncScoreModal
           currentScore={store.creditScore}
@@ -134,7 +145,7 @@ export default function App() {
               <span className="glitch-layer glitch-cyan" aria-hidden="true">DEBT ASSASSINATION</span>
               DEBT ASSASSINATION
             </h1>
-            <p className="app-subtitle">FINANCIAL LIBERATION PROTOCOL · {store.cardsKilled}/12 NEUTRALIZED</p>
+            <p className="app-subtitle">FINANCIAL LIBERATION PROTOCOL · {store.cardsKilled}/{store.debts.length} NEUTRALIZED</p>
             {store.freedUpMinimums > 0 && (
               <p className="snowball-line">
                 ▲ SNOWBALL FREED: ${store.freedUpMinimums.toFixed(2)}/mo
@@ -146,6 +157,7 @@ export default function App() {
             totalRemaining={store.totalRemaining}
             totalPaid={store.totalPaid}
             cardsKilled={store.cardsKilled}
+            totalCards={store.debts.length}
             freedUp={store.freedUpMinimums}
           />
 
@@ -160,7 +172,15 @@ export default function App() {
             onSync={() => setSyncScoreOpen(true)}
           />
 
-          <ProgressBar percent={store.percentComplete} totalPaid={store.totalPaid} />
+          <ProgressBar percent={store.percentComplete} totalPaid={store.totalPaid} totalOriginalDebt={store.totalOriginalDebt} />
+
+          <section className="add-target-panel">
+            <div>
+              <div className="add-target-label">// TARGET REGISTRY</div>
+              <p className="add-target-copy">Add new debts as villains. The hit list re-ranks automatically by total amount owed.</p>
+            </div>
+            <button className="btn-add-target" onClick={() => setAddDebtOpen(true)}>+ ADD DEBT / VILLAIN</button>
+          </section>
 
           {/* Active target */}
           {store.activeTarget && (
@@ -186,7 +206,7 @@ export default function App() {
                   <DebtRow
                     key={debt.id}
                     debt={debt}
-                    rank={store.debts.indexOf(debt) + 1}
+                    rank={store.debts.findIndex(d => d.id === debt.id) + 1}
                     isActive={debt.id === store.activeTarget?.id}
                     onPay={() => setPayingDebt(debt)}
                     onEdit={() => setEditingDebt(debt)}

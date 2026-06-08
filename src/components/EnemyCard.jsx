@@ -28,7 +28,11 @@ function getAttackTier(amount) {
 export { getAttackTier }
 
 export default function EnemyCard({ debt, isTarget, featured, onAttack, onRename, extraClass }) {
-  const defaultInfo = VILLAIN_DATA[debt.id]
+  const defaultInfo = VILLAIN_DATA[debt.id] ?? {
+    name: debt.enemyName || debt.lender || 'UNKNOWN TARGET',
+    villainClass: debt.villainClass || 'Rogue Program',
+    flavor: debt.flavor || 'Unregistered hostile debt program. Rank assigned by amount owed.',
+  }
   const displayName = debt.enemyName || defaultInfo.name
   const info = { ...defaultInfo, name: displayName }
   const [isEditingName, setIsEditingName] = useState(false)

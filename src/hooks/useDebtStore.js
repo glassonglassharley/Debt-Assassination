@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
-import { ORIGINAL_DEBTS, TOTAL_ORIGINAL_DEBT, VILLAIN_DATA } from '../constants'
+import { ORIGINAL_DEBTS, VILLAIN_DATA } from '../constants'
 
 const STORAGE_KEY = 'debt-assassination-v1'
 const DEFAULT_CREDIT_SCORE = 742
+const BASE_DEBT_COUNT = ORIGINAL_DEBTS.length
 const DEFAULT_LAST_SYNCED = '2026-06-08'
 
 const CLEARANCE_TIERS = [
@@ -26,13 +27,43 @@ function saveState(s) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)) } catch {}
 }
 
+function getDefaultVillainInfo(debt) {
+  return VILLAIN_DATA[debt.id] ?? {
+    name: debt.enemyName || debt.lender || 'UNKNOWN TARGET',
+    villainClass: debt.villainClass || 'Rogue Program',
+    flavor: debt.flavor || 'Unregistered hostile debt program. Rank assigned by amount owed.',
+  }
+}
+
+function rankDebts(debts) {
+  return [...debts].sort((a, b) => {
+    if (a.balance <= 0 && b.balance > 0) return 1
+    if (b.balance <= 0 && a.balance > 0) return -1
+    return a.balance - b.balance || a.id - b.id
+  })
+}
+
+function getPhaseForAmount(amount) {
+  if (amount <= 250) return 1
+  if (amount <= 750) return 2
+  return 3
+}
+
 function withEnemyNames(debts) {
-  return debts.map(d => ({
-    ...d,
-    enemyName: typeof d.enemyName === 'string' && d.enemyName.trim()
-      ? d.enemyName
-      : VILLAIN_DATA[d.id]?.name ?? d.lender,
-  }))
+  return debts.map(d => {
+    const info = getDefaultVillainInfo(d)
+    return {
+      ...d,
+      limit: Number.isFinite(Number(d.limit)) && Number(d.limit) > 0 ? Number(d.limit) : Math.max(Number(d.balance) || 0, Number(d.originalBalance) || 0, 1),
+      originalBalance: Number.isFinite(Number(d.originalBalance)) && Number(d.originalBalance) > 0 ? Number(d.originalBalance) : Number(d.balance) || 0,
+      phase: d.phase || getPhaseForAmount(Number(d.balance) || Number(d.originalBalance) || 0),
+      villainClass: d.villainClass || info.villainClass,
+      flavor: d.flavor || info.flavor,
+      enemyName: typeof d.enemyName === 'string' && d.enemyName.trim()
+        ? d.enemyName
+        : info.name,
+    }
+  })
 }
 
 function buildInitialDebts() {
@@ -50,8 +81,9 @@ function clampScore(score) {
 }
 
 function getScoreMetrics(debts, creditScore) {
+  const totalOriginalDebt = debts.reduce((s, d) => s + Math.max(0, d.originalBalance || d.balance || 0), 0)
   const totalRemaining = debts.reduce((s, d) => s + Math.max(0, d.balance), 0)
-  const totalPaid = Math.max(0, TOTAL_ORIGINAL_DEBT - totalRemaining)
+  const totalPaid = Math.max(0, totalOriginalDebt - totalRemaining)
   const cardsKilled = debts.filter(d => d.balance <= 0).length
   const highUtilizationCount = debts.filter(d => d.limit > 0 && d.balance > 0 && (d.balance / d.limit) > 0.7).length
   const highUtilizationPenalty = highUtilizationCount * 8
@@ -80,7 +112,7 @@ function getScoreMetrics(debts, creditScore) {
 
 function getInitialState() {
   const saved = loadState()
-  if (saved?.debts?.length === ORIGINAL_DEBTS.length) {
+  if (Array.isArray(saved?.debts) && saved.debts.length >= BASE_DEBT_COUNT) {
     return {
       ...saved,
       debts: withEnemyNames(saved.debts),
@@ -113,16 +145,18 @@ export function useDebtStore() {
   }
 
   const derived = useMemo(() => {
+    const rankedDebts = rankDebts(state.debts)
+    const totalOriginalDebt = state.debts.reduce((s, d) => s + Math.max(0, d.originalBalance || d.balance || 0), 0)
     const totalRemaining = state.debts.reduce((s, d) => s + Math.max(0, d.balance), 0)
-    const totalPaid = Math.max(0, TOTAL_ORIGINAL_DEBT - totalRemaining)
+    const totalPaid = Math.max(0, totalOriginalDebt - totalRemaining)
     const cardsKilled = state.debts.filter(d => d.balance <= 0).length
-    const percentComplete = Math.min(100, (totalPaid / TOTAL_ORIGINAL_DEBT) * 100)
-    const activeTarget = state.debts.find(d => d.balance > 0) ?? null
+    const percentComplete = totalOriginalDebt > 0 ? Math.min(100, (totalPaid / totalOriginalDebt) * 100) : 0
+    const activeTarget = rankedDebts.find(d => d.balance > 0) ?? null
     const freedUpMinimums = state.debts
       .filter(d => d.balance <= 0 && d.minPayment)
       .reduce((s, d) => s + (d.minPayment || 0), 0)
     const scoreMetrics = getScoreMetrics(state.debts, state.creditScore)
-    return { totalRemaining, totalPaid, cardsKilled, percentComplete, activeTarget, freedUpMinimums, ...scoreMetrics }
+    return { totalOriginalDebt, totalRemaining, totalPaid, cardsKilled, percentComplete, activeTarget, rankedDebts, freedUpMinimums, ...scoreMetrics }
   }, [state.debts, state.creditScore])
 
   function makePayment(debtId, amount) {
@@ -198,7 +232,8 @@ export function useDebtStore() {
   }
 
   function updateEnemyName(debtId, name) {
-    const fallback = VILLAIN_DATA[debtId]?.name ?? 'UNKNOWN TARGET'
+    const currentDebt = state.debts.find(d => d.id === debtId)
+    const fallback = VILLAIN_DATA[debtId]?.name ?? currentDebt?.lender ?? 'UNKNOWN TARGET'
     const cleaned = String(name || '')
       .trim()
       .replace(/\s+/g, ' ')
@@ -207,6 +242,34 @@ export function useDebtStore() {
       d.id === debtId ? { ...d, enemyName: cleaned || fallback } : d
     )
     persist({ ...state, debts: newDebts })
+  }
+
+  function addDebt(input) {
+    const balance = Math.max(0, parseFloat(input.balance) || 0)
+    if (balance <= 0) return null
+    const nextId = Math.max(0, ...state.debts.map(d => Number(d.id) || 0)) + 1
+    const lender = String(input.lender || 'New Debt').trim().replace(/\s+/g, ' ').slice(0, 48)
+    const enemyName = String(input.enemyName || lender).trim().replace(/\s+/g, ' ').slice(0, 32).toUpperCase()
+    const villainClass = String(input.villainClass || 'Rogue Program').trim().replace(/\s+/g, ' ').slice(0, 28)
+    const limit = Math.max(1, parseFloat(input.limit) || balance)
+    const minPayment = input.minPayment === null || input.minPayment === undefined ? null : Math.max(0, parseFloat(input.minPayment) || 0) || null
+    const apr = input.apr === null || input.apr === undefined ? null : Math.max(0, parseFloat(input.apr) || 0) || null
+    const newDebt = {
+      id: nextId,
+      lender,
+      originalBalance: balance,
+      balance,
+      limit,
+      phase: getPhaseForAmount(balance),
+      minPayment,
+      apr,
+      enemyName,
+      villainClass,
+      flavor: 'User-added hostile debt program. Rank assigned by amount owed.',
+      custom: true,
+    }
+    persist({ ...state, debts: rankDebts([...state.debts, newDebt]) })
+    return newDebt
   }
 
   function syncCreditScore(score) {
@@ -274,7 +337,7 @@ export function useDebtStore() {
   }
 
   return {
-    debts: state.debts,
+    debts: derived.rankedDebts,
     paymentHistory: state.paymentHistory,
     scoreHistory: state.scoreHistory || [],
     milestonesShown: state.milestonesShown,
@@ -288,6 +351,7 @@ export function useDebtStore() {
     updateMinPayment,
     updateAPR,
     updateEnemyName,
+    addDebt,
     syncCreditScore,
     markMilestoneShown,
     setViewMode,

@@ -1609,3 +1609,115 @@ input { font-family: inherit; }
   .progress-meta { gap: 2px; }
   .progress-meta-val { font-size: 0.75rem; }
 }
+
+
+/* ===================== ADD DEBT / VILLAIN ===================== */
+.add-target-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 18px 0 20px;
+  padding: 16px;
+  border: 1px solid rgba(201, 168, 76, 0.24);
+  background:
+    linear-gradient(135deg, rgba(201, 168, 76, 0.08), rgba(255, 0, 60, 0.035)),
+    rgba(0, 0, 0, 0.28);
+  clip-path: var(--clip-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.add-target-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.08), transparent);
+  transform: translateX(-120%);
+  animation: add-target-scan 5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes add-target-scan {
+  to { transform: translateX(120%); }
+}
+
+.add-target-label {
+  font-family: var(--font-title);
+  color: var(--gold);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  margin-bottom: 5px;
+}
+
+.add-target-copy,
+.add-debt-note {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  letter-spacing: 0.06em;
+}
+
+.btn-add-target {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(201, 168, 76, 0.55);
+  background: rgba(201, 168, 76, 0.12);
+  color: var(--gold);
+  font-family: var(--font-title);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  padding: 11px 14px;
+  min-height: 40px;
+  white-space: nowrap;
+  clip-path: var(--clip-sm);
+  transition: all 0.2s;
+}
+
+.btn-add-target:hover {
+  color: var(--bg);
+  background: var(--gold);
+  box-shadow: 0 0 22px rgba(201, 168, 76, 0.28);
+}
+
+.battle-add-target {
+  margin: 0 auto 14px;
+  display: inline-flex;
+}
+
+.add-debt-modal {
+  max-width: 680px;
+}
+
+.add-debt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.split-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.add-rank-preview {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 700px) {
+  .add-target-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-add-target {
+    width: 100%;
+  }
+
+  .add-debt-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,6 +1,4 @@
-import { TOTAL_ORIGINAL_DEBT } from '../constants'
-
-export default function ProgressBar({ percent, totalPaid }) {
+export default function ProgressBar({ percent, totalPaid, totalOriginalDebt }) {
   const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   return (
@@ -8,7 +6,7 @@ export default function ProgressBar({ percent, totalPaid }) {
       <div className="progress-meta">
         <div className="progress-meta-start">
           <span className="progress-meta-label">START</span>
-          <span className="progress-meta-val">${TOTAL_ORIGINAL_DEBT.toLocaleString()}</span>
+          <span className="progress-meta-val">${totalOriginalDebt.toLocaleString()}</span>
         </div>
         <div className="progress-meta-paid">${fmt(totalPaid)} PAID</div>
         <div className="progress-meta-target" style={{ textAlign: 'right' }}>

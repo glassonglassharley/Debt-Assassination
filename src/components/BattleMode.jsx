@@ -47,7 +47,7 @@ export default function BattleMode({ store, addToast }) {
   }, [triggerFlash])
 
   const addKillFeed = useCallback((debt, amount, eliminated) => {
-    const villainName = debt.enemyName || VILLAIN_DATA[debt.id].name
+    const villainName = debt.enemyName || VILLAIN_DATA[debt.id]?.name || debt.lender || 'UNKNOWN TARGET'
     const id = Date.now() + Math.random()
     const msg = `YOU DEALT $${amount.toFixed(2)} TO ${villainName}${eliminated ? ' · ELIMINATED' : ''}`
     setKillFeed(prev => [{ id, msg, eliminated }, ...prev].slice(0, 5))
@@ -83,7 +83,7 @@ export default function BattleMode({ store, addToast }) {
       addToast('ENEMY ELIMINATED', 'gold')
       setLootDrops(prev => [{
         id: Date.now() + Math.random(),
-        label: `${debt.enemyName || VILLAIN_DATA[debt.id].name} LOOT DROP`,
+        label: `${debt.enemyName || VILLAIN_DATA[debt.id]?.name || debt.lender} LOOT DROP`,
         amount: debt.minPayment || 0,
       }, ...prev].slice(0, 5))
       setTimeout(() => setShowConfetti(false), 3500)

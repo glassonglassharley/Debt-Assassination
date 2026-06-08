@@ -1,4 +1,4 @@
-export default function StatsRow({ totalRemaining, totalPaid, cardsKilled, freedUp }) {
+export default function StatsRow({ totalRemaining, totalPaid, cardsKilled, totalCards, freedUp }) {
   const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   return (
@@ -13,7 +13,7 @@ export default function StatsRow({ totalRemaining, totalPaid, cardsKilled, freed
       </div>
       <div className="stat-card">
         <span className="stat-label">CARDS KILLED</span>
-        <div className="stat-value gold">{cardsKilled}/12</div>
+        <div className="stat-value gold">{cardsKilled}/{totalCards}</div>
       </div>
     </div>
   )
