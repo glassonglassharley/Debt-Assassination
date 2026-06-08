@@ -56,31 +56,52 @@ function Pat({ id }) {
   )
 }
 
-/* 2 — KIKOFF KID: hoodie shadow, slit eyes, arms reaching */
+/* 2 — KIKOFF KID: deep hood, cyan slit eyes, wiry arms */
 function Kid({ id }) {
   return (
     <svg viewBox="0 0 76 76" width="100%" height="100%" role="img" aria-label="KIKOFF KID portrait">
-      <BgGrad id={id} c1="#3a0028" />
+      <defs>
+        <radialGradient id={`bg${id}`} cx="50%" cy="25%" r="72%">
+          <stop offset="0" stopColor="#001a1a" stopOpacity="0.9" />
+          <stop offset="0.6" stopColor="#020808" stopOpacity="0.97" />
+          <stop offset="1" stopColor="#000408" />
+        </radialGradient>
+        <filter id={`gf${id}`} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="2.2" result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <filter id={`cf${id}`} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="1.5" result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
       <rect width="76" height="76" fill={`url(#bg${id})`} />
-      <CornerMarks c="#ff2a6d" />
-      <path d="M0 52 H10 V40 H22 M76 58 H66 V68" stroke="#ff2a6d" strokeWidth="0.6" opacity="0.28" fill="none" />
-      {/* Hoodie big pointed hood */}
-      <path d="M10 46 Q12 10 38 5 Q64 10 66 46 Q54 22 38 20 Q22 22 10 46Z" fill="rgba(15,0,12,0.92)" stroke="#ff2a6d" strokeWidth="1.2" />
-      {/* Deep shadow */}
-      <ellipse cx="38" cy="36" rx="16" ry="15" fill="#030108" />
-      {/* Slit eyes peeking */}
-      <ellipse cx="31" cy="33" rx="5" ry="2.5" fill="#ff2a6d" />
-      <ellipse cx="31" cy="33" rx="2.5" ry="1" fill="#0a0108" />
-      <ellipse cx="45" cy="33" rx="5" ry="2.5" fill="#ff2a6d" />
-      <ellipse cx="45" cy="33" rx="2.5" ry="1" fill="#0a0108" />
-      {/* Wiry body */}
-      <path d="M26 58 L30 46 H46 L50 58" stroke="#ff2a6d" strokeWidth="1.2" fill="rgba(15,0,8,0.6)" />
-      {/* Arms reaching */}
-      <path d="M26 54 Q14 60 8 68" stroke="#ff2a6d" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <path d="M50 54 Q62 60 68 68" stroke="#ff2a6d" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <path d="M8 68 Q5 62 7 58 M8 68 Q4 64 6 60" stroke="#ff2a6d" strokeWidth="0.9" fill="none" opacity="0.8" />
-      <path d="M68 68 Q71 62 69 58 M68 68 Q72 64 70 60" stroke="#ff2a6d" strokeWidth="0.9" fill="none" opacity="0.8" />
-      <text x="38" y="73" textAnchor="middle" fill="#ff2a6d" fontSize="5.5" fontFamily="monospace" fontWeight="700" letterSpacing="1.5">KID</text>
+      <CornerMarks c="#00f5ff" />
+      {/* Hood outer glow */}
+      <path d="M8 50 Q9 6 38 2 Q67 6 68 50 Q56 18 38 16 Q20 18 8 50Z"
+        fill="none" stroke="#00f5ff" strokeWidth="3" opacity="0.18" filter={`url(#cf${id})`} />
+      {/* Hood silhouette — fills top 60% */}
+      <path d="M8 50 Q9 6 38 2 Q67 6 68 50 Q56 18 38 16 Q20 18 8 50Z"
+        fill="#030d0d" stroke="#00f5ff" strokeWidth="1.1" opacity="0.95" />
+      {/* Deep face shadow inside hood */}
+      <ellipse cx="38" cy="34" rx="17" ry="16" fill="#010606" />
+      {/* Cyan slit eyes — left */}
+      <ellipse cx="29" cy="32" rx="6" ry="2.2" fill="#00f5ff" filter={`url(#cf${id})`} opacity="0.9" />
+      <ellipse cx="29" cy="32" rx="6" ry="2.2" fill="#00f5ff" opacity="0.85" />
+      <ellipse cx="29" cy="32" rx="2.8" ry="0.9" fill="#000c0c" />
+      {/* Cyan slit eyes — right */}
+      <ellipse cx="47" cy="32" rx="6" ry="2.2" fill="#00f5ff" filter={`url(#cf${id})`} opacity="0.9" />
+      <ellipse cx="47" cy="32" rx="6" ry="2.2" fill="#00f5ff" opacity="0.85" />
+      <ellipse cx="47" cy="32" rx="2.8" ry="0.9" fill="#000c0c" />
+      {/* Wiry torso */}
+      <path d="M28 62 L31 48 H45 L48 62" stroke="#00f5ff" strokeWidth="1" fill="rgba(0,10,14,0.65)" opacity="0.7" />
+      {/* Left arm reaching to bottom-left corner */}
+      <path d="M28 56 Q16 62 5 72" stroke="#00f5ff" strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.85" />
+      <path d="M5 72 Q2 68 5 66 M5 72 Q1 66 4 63" stroke="#00f5ff" strokeWidth="0.9" fill="none" opacity="0.75" />
+      {/* Right arm reaching to bottom-right corner */}
+      <path d="M48 56 Q60 62 71 72" stroke="#00f5ff" strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.85" />
+      <path d="M71 72 Q74 68 71 66 M71 72 Q75 66 72 63" stroke="#00f5ff" strokeWidth="0.9" fill="none" opacity="0.75" />
+      <text x="38" y="74" textAnchor="middle" fill="#00f5ff" fontSize="5.5" fontFamily="monospace" fontWeight="700" letterSpacing="1.5" opacity="0.8">KID</text>
     </svg>
   )
 }

@@ -37,7 +37,7 @@
   padding: 24px 16px 0;
 }
 
-.battle-enemy-featured { margin-bottom: 48px; }
+.battle-enemy-featured { margin-bottom: 24px; }
 
 .battle-enemy-grid {
   display: grid;
@@ -538,7 +538,17 @@
   padding: 2px 6px;
   border: 1px solid;
 }
-.dc-tag.raging-tag  { border-color: var(--red); color: var(--red); animation: blink 0.8s step-end infinite; }
+.dc-tag.raging-tag  {
+  font-size: 10px;
+  background: rgba(255, 102, 0, 0.3);
+  border: 1px solid #ff6600;
+  color: #ff6600;
+  animation: raging-pulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes raging-pulse {
+  from { box-shadow: 0 0 4px #ff6600; }
+  to   { box-shadow: 0 0 8px #ff6600, 0 0 16px rgba(255,102,0,0.4); }
+}
 .dc-tag.dmg-tag     { border-color: rgba(255,0,60,0.3); color: rgba(255,0,60,0.8); }
 .dc-tag.boss-tag    { border-color: var(--gold); color: var(--gold); animation: neon-pulse-gold 1.5s ease-in-out infinite alternate; }
 .dc-tag.freed-tag   { border-color: var(--gold); color: var(--gold); }
@@ -814,7 +824,7 @@
   background: linear-gradient(135deg, rgba(0,4,20,0.9), rgba(2,0,15,0.95));
   border: 1px solid rgba(0, 245, 255, 0.35);
   box-shadow: var(--cyan-glow), inset 0 0 20px rgba(0, 0, 0, 0.7);
-  width: 80px; height: 80px;
+  width: 100px; height: 100px;
   overflow: hidden;
   flex-shrink: 0;
   border-radius: 0;
@@ -1031,6 +1041,16 @@
 }
 .hud-bar-lbl.hud-sh-lbl { color: #00ffff; opacity: 0.9; }
 
+.hud-sh-label {
+  font-family: var(--font-body);
+  font-size: 8px;
+  color: #00ffff;
+  letter-spacing: 0.18em;
+  opacity: 0.7;
+  margin-bottom: 2px;
+  padding-left: 22px;
+}
+
 .hud-bar-outer {
   flex: 1;
   height: 12px;
@@ -1042,7 +1062,8 @@
 }
 .hud-bar-outer.hud-sh-outer {
   background: rgba(0,255,255,0.05);
-  border-color: rgba(0,255,255,0.3);
+  border-color: rgba(0,255,255,0.4);
+  height: 10px;
 }
 
 .hud-bar-fill {
@@ -1066,7 +1087,7 @@
 .hud-hp-fill.hud-critical { animation: hp-crit-pulse 0.45s ease-in-out infinite alternate; }
 .hud-sh-fill {
   background: #00ffff;
-  box-shadow: 0 0 10px #00ffff, 0 0 4px #00ffff inset;
+  box-shadow: 0 0 14px #00ffff, 0 0 28px rgba(0,255,255,0.4), 0 0 4px #00ffff inset;
 }
 
 .hud-bar-val { font-family: var(--font-title); font-size: 0.625rem; color: var(--red); min-width: 42px; text-align: right; }
@@ -1284,7 +1305,7 @@
 }
 
 .battle-enemy-grid .dc-tier-boss {
-  min-height: 320px;
+  min-height: 400px;
   background:
     radial-gradient(circle at 20% 20%, rgba(201,168,76,0.13), transparent 28%),
     radial-gradient(circle at 80% 30%, rgba(255,0,60,0.12), transparent 30%),
@@ -1292,12 +1313,46 @@
 }
 
 .battle-enemy-grid .dc-tier-boss .portrait-frame {
-  width: 160px;
-  height: 160px;
+  width: 200px;
+  height: 200px;
 }
 
 .battle-enemy-grid .dc-tier-boss .dc-portrait-col {
-  min-width: 186px;
+  min-width: 220px;
+}
+
+/* Orphan card: last card alone in an odd position (not heavy/boss) → full width */
+.battle-enemy-grid > .dossier-card:last-child:nth-child(odd):not(.dc-tier-heavy):not(.dc-tier-boss) {
+  grid-column: 1 / -1;
+}
+
+/* Gold pulse border animation for boss card */
+@keyframes goldPulse {
+  0%, 100% { border-color: rgba(201,168,76,0.4); box-shadow: var(--gold-glow), inset 0 0 20px rgba(0,0,0,0.7); }
+  50%       { border-color: rgba(201,168,76,0.85); box-shadow: 0 0 16px rgba(201,168,76,0.8), 0 0 40px rgba(201,168,76,0.35), inset 0 0 20px rgba(0,0,0,0.7); }
+}
+.battle-enemy-grid .dc-tier-boss {
+  animation: goldPulse 2s ease-in-out infinite;
+}
+
+/* FINAL BOSS stamp */
+.dc-boss-stamp {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-family: var(--font-title);
+  font-weight: 900;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+  text-shadow: 0 0 12px rgba(201,168,76,0.8);
+  border: 2px solid var(--gold);
+  padding: 3px 8px;
+  transform: rotate(-8deg);
+  transform-origin: center;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 5;
 }
 
 .dc-featured {
@@ -1484,6 +1539,21 @@
   .battle-enemy-grid .dc-tier-grunt { transform: none; }
   .battle-enemy-grid .dc-tier-heavy,
   .battle-enemy-grid .dc-tier-boss { grid-column: auto; }
+  .battle-view { overflow-x: hidden; }
+}
+
+@media (max-width: 375px) {
+  .battle-view { padding: 0 8px 80px; overflow-x: hidden; }
+  .battle-enemy-grid { grid-template-columns: 1fr; gap: 10px; }
+  .battle-enemy-grid .dc-tier-heavy,
+  .battle-enemy-grid .dc-tier-boss { grid-column: auto; }
+  .dossier-card { min-width: 0; }
+  .dc-portrait-col { min-width: 80px !important; padding: 8px 6px !important; }
+  .portrait-frame { width: 72px !important; height: 72px !important; }
+  .battle-enemy-grid .dc-tier-boss .portrait-frame { width: 100px !important; height: 100px !important; }
+  .battle-enemy-grid .dc-tier-boss .dc-portrait-col { min-width: 116px !important; }
+  .battle-command-strip { grid-template-columns: 1fr; }
+  .bc-btn, .hud-btn-group button { min-height: 44px; }
 }
 
 @media (max-width: 700px) {
@@ -1492,8 +1562,8 @@
   .dc-featured .dc-villain-name { font-size: 1.25rem; }
   .dc-boss .dc-villain-name { font-size: 1.4rem; }
   .dc-flavor-line { display: none; }
-  .battle-enemy-grid .dc-tier-boss .portrait-frame { width: 100px; height: 100px; }
-  .battle-enemy-grid .dc-tier-boss .dc-portrait-col { min-width: 120px; }
+  .battle-enemy-grid .dc-tier-boss .portrait-frame { width: 140px; height: 140px; }
+  .battle-enemy-grid .dc-tier-boss .dc-portrait-col { min-width: 160px; }
 }
 
 

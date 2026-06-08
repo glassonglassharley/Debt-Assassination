@@ -117,6 +117,9 @@ export default function EnemyCard({ debt, isTarget, featured, onAttack, onRename
       {/* Circuit texture */}
       <div className="dc-circuit" />
 
+      {/* Final Boss stamp */}
+      {isBoss && !eliminated && <div className="dc-boss-stamp">FINAL BOSS</div>}
+
       {/* Attack ripple effect */}
       {hasAttack && <div className="dc-ripple" key={extraClass} />}
 

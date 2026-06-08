@@ -44,6 +44,7 @@ export default function PlayerHUD({ health, cardsKilled, totalPaid, gridIntegrit
         </div>
 
         <div className="hud-bars">
+          <div className="hud-sh-label">SHIELD</div>
           <div className="hud-bar-row">
             <span className="hud-bar-lbl hud-sh-lbl">SH</span>
             <div className="hud-bar-outer hud-sh-outer">

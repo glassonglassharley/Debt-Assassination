@@ -400,9 +400,9 @@ input { font-family: inherit; }
 }
 
 .progress-bar-outer {
-  background: rgba(255, 0, 60, 0.07);
-  border: 1px solid rgba(255, 0, 60, 0.2);
-  height: 28px;
+  background: rgba(255, 0, 60, 0.15);
+  border: 1px solid rgba(255, 0, 60, 0.3);
+  height: 16px;
   position: relative;
   overflow: hidden;
 }
@@ -464,6 +464,7 @@ input { font-family: inherit; }
   color: var(--white);
   letter-spacing: 0.08em;
   margin-bottom: 6px;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
 }
 
 .active-target-balance {
@@ -471,14 +472,15 @@ input { font-family: inherit; }
   font-weight: 900;
   font-size: clamp(1.8rem, 8vw, 2.4rem);
   color: var(--red);
+  text-shadow: 0 0 20px rgba(255, 0, 60, 0.9);
   animation: pulse-glow 1.8s ease-in-out infinite alternate;
   margin-bottom: 10px;
   line-height: 1;
 }
 
 @keyframes pulse-glow {
-  from { text-shadow: 0 0 5px var(--red), 0 0 15px var(--red); }
-  to   { text-shadow: 0 0 12px var(--red), 0 0 35px var(--red), 0 0 70px rgba(255,0,60,0.4); }
+  from { text-shadow: 0 0 10px rgba(255,0,60,0.7), 0 0 20px rgba(255,0,60,0.5); }
+  to   { text-shadow: 0 0 20px rgba(255,0,60,0.9), 0 0 40px rgba(255,0,60,0.6), 0 0 80px rgba(255,0,60,0.3); }
 }
 
 .active-target-instruction {
@@ -783,19 +785,25 @@ input { font-family: inherit; }
 }
 
 .btn-chip {
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--muted);
+  font-family: var(--font-body);
   font-size: 0.55rem;
   letter-spacing: 0.12em;
-  padding: 6px 8px;
+  padding: 6px 12px;
   min-height: 44px;
   display: flex;
   align-items: center;
-  transition: color 0.2s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
   white-space: nowrap;
+  cursor: pointer;
 }
-.btn-chip:hover { color: var(--gold); }
+.btn-chip:hover {
+  color: var(--gold);
+  border-color: rgba(201, 168, 76, 0.4);
+  background: rgba(201, 168, 76, 0.05);
+}
 
 /* ===================== PAYMENT MODAL ===================== */
 .modal-overlay {
