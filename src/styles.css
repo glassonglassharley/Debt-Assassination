@@ -1809,3 +1809,200 @@ input { font-family: inherit; }
     grid-template-columns: 1fr;
   }
 }
+
+/* ===================== HAMBURGER MENU ===================== */
+.hamburger-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 151;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(4, 4, 8, 0.88);
+  border: 1px solid rgba(255, 0, 60, 0.35);
+  clip-path: var(--clip-sm);
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.hamburger-btn:hover,
+.hamburger-btn.hb-open {
+  border-color: var(--red);
+  box-shadow: 0 0 12px rgba(255, 0, 60, 0.4);
+}
+
+.hb-line {
+  display: block;
+  width: 18px;
+  height: 1.5px;
+  background: var(--red);
+  transition: transform 0.22s ease, opacity 0.22s ease, width 0.22s ease;
+  transform-origin: center;
+}
+
+.hb-open .hb-line:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+.hb-open .hb-line:nth-child(2) { opacity: 0; width: 0; }
+.hb-open .hb-line:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+/* Backdrop */
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 4, 8, 0.6);
+  z-index: 149;
+  backdrop-filter: blur(2px);
+}
+
+/* Side drawer */
+.side-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(380px, 92vw);
+  background:
+    linear-gradient(160deg, rgba(255, 0, 60, 0.04), rgba(0, 4, 20, 0.98)),
+    #040408;
+  border-left: 1px solid rgba(255, 0, 60, 0.3);
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+}
+
+.side-drawer.drawer-open {
+  transform: translateX(0);
+}
+
+/* Glow edge on the left border */
+.side-drawer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -1px; bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--red), transparent);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid rgba(255, 0, 60, 0.15);
+  flex-shrink: 0;
+}
+
+.drawer-eyebrow {
+  font-family: var(--font-title);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: 0.22em;
+}
+
+.drawer-close {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--muted);
+  font-size: 0.8rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: var(--clip-sm);
+  transition: color 0.15s, border-color 0.15s;
+}
+.drawer-close:hover { color: var(--white); border-color: var(--red); }
+
+.drawer-section-title {
+  font-family: var(--font-title);
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: 0.14em;
+  padding: 18px 20px 4px;
+  flex-shrink: 0;
+}
+
+.drawer-intro {
+  font-size: 0.62rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  padding: 0 20px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+  line-height: 1.6;
+}
+
+/* FAQ scroll area */
+.faq-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0 20px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 0, 60, 0.25) transparent;
+}
+
+.faq-list::-webkit-scrollbar { width: 4px; }
+.faq-list::-webkit-scrollbar-track { background: transparent; }
+.faq-list::-webkit-scrollbar-thumb { background: rgba(255, 0, 60, 0.25); border-radius: 2px; }
+
+.faq-section {
+  padding: 0 0 6px;
+}
+
+.faq-category {
+  font-family: var(--font-title);
+  font-size: 0.48rem;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: 0.3em;
+  padding: 14px 20px 6px;
+  opacity: 0.8;
+}
+
+.faq-item {
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s;
+}
+.faq-item:hover { background: rgba(255, 0, 60, 0.03); }
+
+.faq-term {
+  font-family: var(--font-title);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.14em;
+  margin-bottom: 5px;
+}
+
+.faq-def {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.65;
+  letter-spacing: 0.03em;
+}
+
+.drawer-footer {
+  font-family: var(--font-body);
+  font-size: 0.48rem;
+  color: rgba(255, 0, 60, 0.3);
+  letter-spacing: 0.2em;
+  text-align: center;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 0, 60, 0.1);
+  flex-shrink: 0;
+}

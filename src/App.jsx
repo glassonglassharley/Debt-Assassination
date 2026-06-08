@@ -8,6 +8,7 @@ import PaymentModal from './components/PaymentModal'
 import EditBalanceModal from './components/EditBalanceModal'
 import AddDebtModal from './components/AddDebtModal'
 import AprModal from './components/AprModal'
+import HamburgerMenu from './components/HamburgerMenu'
 import PaymentHistory from './components/PaymentHistory'
 import MilestoneOverlay from './components/MilestoneOverlay'
 import Confetti from './components/Confetti'
@@ -79,6 +80,7 @@ export default function App() {
     <>
       <GridBg />
       <div className="crt-overlay" />
+      <HamburgerMenu />
 
       {showConfetti && <Confetti />}
 
