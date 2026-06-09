@@ -15,7 +15,7 @@ function getAttackTier(amount) {
   return 'pistol'
 }
 
-export default function BattleMode({ store, addToast }) {
+export default function BattleMode({ store, addToast, lastSyncLabel, syncOverdue, syncFlash }) {
   const [attackingDebt, setAttackingDebt] = useState(null)
   const [flashClass, setFlashClass] = useState('')
   const [cardAnimMap, setCardAnimMap] = useState({})
@@ -160,6 +160,9 @@ export default function BattleMode({ store, addToast }) {
         projectedScore={store.projectedScore}
         scoreGain={scoreGain}
         totalDailyDamage={store.totalDailyDamage}
+        lastSyncLabel={lastSyncLabel}
+        syncOverdue={syncOverdue}
+        syncFlash={syncFlash}
       />
 
       <section className="battle-command-strip" aria-label="Battle command metrics">

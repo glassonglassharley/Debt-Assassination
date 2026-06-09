@@ -1,4 +1,4 @@
-export default function PlayerHUD({ health, cardsKilled, totalPaid, gridIntegrity, clearanceTier, projectedScore, scoreGain, totalDailyDamage }) {
+export default function PlayerHUD({ health, cardsKilled, totalPaid, gridIntegrity, clearanceTier, projectedScore, scoreGain, totalDailyDamage, lastSyncLabel, syncOverdue, syncFlash }) {
   const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const healthPct = Math.max(0, Math.min(100, health))
   const shieldPct = Math.min(100, 35 + cardsKilled * 5)
@@ -46,6 +46,14 @@ export default function PlayerHUD({ health, cardsKilled, totalPaid, gridIntegrit
           )}
           {scoreGain > 0 && (
             <div className="hud-score-gain" key={scoreGain}>+{scoreGain} GRID</div>
+          )}
+          {syncFlash && (
+            <div className="hud-intel-flash">⬡ INTEL UPDATED</div>
+          )}
+          {lastSyncLabel && !syncFlash && (
+            <div className={`hud-sync-ts ${syncOverdue ? 'hud-sync-overdue' : ''}`}>
+              {syncOverdue ? '⚠ SYNC OVERDUE' : `SYNC ${lastSyncLabel}`}
+            </div>
           )}
         </div>
 

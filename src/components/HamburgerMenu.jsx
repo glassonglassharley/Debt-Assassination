@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { usePlaidLink } from 'react-plaid-link'
 
 const FAQ = [
   {
@@ -50,12 +51,35 @@ const FAQ = [
   },
 ]
 
-export default function HamburgerMenu({ addToast, onImport, onShowIntro }) {
+export default function HamburgerMenu({ addToast, onImport, onShowIntro, plaid }) {
   const [open, setOpen] = useState(false)
   const [pasteVal, setPasteVal] = useState('')
+  const [connecting, setConnecting] = useState(false)
   const fileInputRef = useRef(null)
 
   const close = () => setOpen(false)
+
+  const { open: openLink, ready } = usePlaidLink({
+    token: plaid?.linkToken ?? null,
+    onSuccess: (publicToken) => plaid?.onLinkSuccess(publicToken),
+  })
+
+  useEffect(() => {
+    if (ready && connecting) {
+      openLink()
+      setConnecting(false)
+    }
+  }, [ready, connecting, openLink])
+
+  async function handleConnect() {
+    setConnecting(true)
+    const token = await plaid?.fetchLinkToken()
+    if (!token) setConnecting(false)
+  }
+
+  async function handleSync() {
+    await plaid?.syncBalances({ silent: false })
+  }
 
   function handleExport() {
     try {
@@ -138,6 +162,46 @@ export default function HamburgerMenu({ addToast, onImport, onShowIntro }) {
         </div>
 
         <div className="faq-list">
+          {/* Plaid bank sync section */}
+          <div className="faq-section">
+            <div className="faq-category">BANK SYNC</div>
+            <div className="drawer-data-section">
+              {!plaid?.isConnected ? (
+                <>
+                  <button
+                    className="drawer-data-btn plaid-connect-btn"
+                    onClick={handleConnect}
+                    disabled={connecting}
+                  >
+                    {connecting ? '⟳ INITIALIZING...' : '⬡ CONNECT ACCOUNTS'}
+                  </button>
+                  <p className="drawer-data-hint">Link your bank via Plaid to auto-sync card balances.</p>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="drawer-data-btn plaid-sync-btn"
+                    onClick={handleSync}
+                    disabled={plaid?.isSyncing}
+                  >
+                    {plaid?.isSyncing ? '⟳ SYNCING...' : '⟳ SYNC BALANCES'}
+                  </button>
+                  {plaid?.lastSyncLabel && (
+                    <p className={`drawer-data-hint plaid-sync-ts ${plaid?.syncOverdue ? 'sync-overdue' : ''}`}>
+                      LAST SYNC: {plaid.lastSyncLabel}{plaid?.syncOverdue ? ' — OVERDUE' : ''}
+                    </p>
+                  )}
+                  <button
+                    className="drawer-data-btn plaid-disconnect-btn"
+                    onClick={() => plaid?.disconnect()}
+                  >
+                    ✕ DISCONNECT ACCOUNTS
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Data backup section */}
           <div className="faq-section">
             <div className="faq-category">DATA BACKUP</div>

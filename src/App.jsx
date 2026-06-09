@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import GridBg from './components/GridBg'
 import StatsRow from './components/StatsRow'
 import ProgressBar from './components/ProgressBar'
@@ -17,6 +17,8 @@ import BattleMode from './components/BattleMode'
 import ClearanceLevelPanel from './components/ClearanceLevelPanel'
 import SyncScoreModal from './components/SyncScoreModal'
 import { useDebtStore } from './hooks/useDebtStore'
+import { usePlaidSync } from './hooks/usePlaidSync'
+import PlaidMappingModal from './components/PlaidMappingModal'
 import { PHASES } from './constants'
 
 const MILESTONES = [25, 50, 75, 100]
@@ -50,6 +52,16 @@ export default function App() {
     setToasts(prev => [...prev, { id, msg, type }])
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000)
   }, [])
+
+  const plaid = usePlaidSync({ store, addToast })
+
+  const didAutoSync = useRef(false)
+  useEffect(() => {
+    if (!didAutoSync.current && plaid.isConnected) {
+      didAutoSync.current = true
+      plaid.syncBalances({ silent: true })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePayment = useCallback((debtId, amount) => {
     const result = store.makePayment(debtId, amount)
@@ -88,7 +100,16 @@ export default function App() {
         addToast={addToast}
         onImport={store.importState}
         onShowIntro={() => setShowOnboarding(true)}
+        plaid={plaid}
       />
+      {plaid.showMappingModal && (
+        <PlaidMappingModal
+          accounts={plaid.unmatchedAccounts}
+          debts={store.debts}
+          onSave={plaid.saveMappings}
+          onClose={() => plaid.setShowMappingModal(false)}
+        />
+      )}
       {showOnboarding && (
         <OnboardingModal onDismiss={() => {
           try { localStorage.setItem('hasSeenOnboarding', '1') } catch {}
@@ -289,7 +310,13 @@ export default function App() {
               </h1>
             </header>
           </div>
-          <BattleMode store={store} addToast={addToast} />
+          <BattleMode
+            store={store}
+            addToast={addToast}
+            lastSyncLabel={plaid.lastSyncLabel}
+            syncOverdue={plaid.syncOverdue}
+            syncFlash={plaid.syncFlash}
+          />
         </>
       )}
 
