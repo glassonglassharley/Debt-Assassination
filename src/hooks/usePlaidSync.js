@@ -128,7 +128,6 @@ export function usePlaidSync({ store, addToast }) {
 
         if (!debt) {
           unmatched.push(acct)
-          console.log('Plaid: no match for', acct.name)
           continue
         }
 
