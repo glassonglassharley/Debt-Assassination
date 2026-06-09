@@ -35,9 +35,9 @@ function Eye({ cx, cy, iris = '#2a1008', sx = 7, sy = 4.5, glow }) {
     <>
       {glow && <ellipse cx={cx} cy={cy} rx={sx + 2} ry={sy + 1.5} fill={glow} opacity="0.35" />}
       <ellipse cx={cx} cy={cy} rx={sx} ry={sy} fill="#ddd4c0" />
-      <circle cx={cx} cy={cy} r={sx * 0.5} fill={iris} />
-      <circle cx={cx} cy={cy} r={sx * 0.27} fill="#050302" />
-      <circle cx={cx - sx * 0.25} cy={cy - sy * 0.3} r={sx * 0.16} fill="white" opacity="0.88" />
+      <circle cx={cx} cy={cy} r={sx * 0.67} fill={iris} />
+      <circle cx={cx} cy={cy} r={sx * 0.36} fill="#060304" />
+      <circle cx={cx - sx * 0.2} cy={cy - sy * 0.28} r={sx * 0.15} fill="white" opacity="0.92" />
       <ellipse cx={cx} cy={cy - sy * 0.9} rx={sx} ry={sy * 0.45} fill="#1a0c06" opacity="0.55" />
     </>
   )
@@ -315,13 +315,13 @@ function Reaper({ id }) {
       {/* Sclera (hollow — very dark) */}
       <ellipse cx="36" cy="43" rx="7" ry="5" fill="#0a0208" />
       <ellipse cx="64" cy="43" rx="7" ry="5" fill="#0a0208" />
-      {/* Red iris glow */}
-      <circle cx="36" cy="43" r="4" fill="#8b0020" />
-      <circle cx="64" cy="43" r="4" fill="#8b0020" />
-      <circle cx="36" cy="43" r="2" fill="#ff003c" opacity="0.8" />
-      <circle cx="64" cy="43" r="2" fill="#ff003c" opacity="0.8" />
-      <circle cx="34.5" cy="41.5" r="1.2" fill="#ff8080" opacity="0.6" />
-      <circle cx="62.5" cy="41.5" r="1.2" fill="#ff8080" opacity="0.6" />
+      {/* Red iris glow — large for direct stare */}
+      <circle cx="36" cy="43" r="5.2" fill="#8b0020" />
+      <circle cx="64" cy="43" r="5.2" fill="#8b0020" />
+      <circle cx="36" cy="43" r="2.8" fill="#ff003c" opacity="0.85" />
+      <circle cx="64" cy="43" r="2.8" fill="#ff003c" opacity="0.85" />
+      <circle cx="34.2" cy="41.2" r="1.4" fill="#ff8080" opacity="0.65" />
+      <circle cx="62.2" cy="41.2" r="1.4" fill="#ff8080" opacity="0.65" />
 
       {/* Cheekbone paint lines */}
       <path d="M26 48 L34 44" stroke="#ff003c" strokeWidth="1.2" opacity="0.5" strokeLinecap="round" />
@@ -610,13 +610,13 @@ function LeadWeight({ id }) {
 
       {/* Small intense eyes — barely visible under heavy brow */}
       <ellipse cx="37" cy="50" rx="6" ry="3.5" fill="#1a0a06" />
-      <circle cx="37" cy="50" r="2.5" fill="#8b0020" />
-      <circle cx="37" cy="50" r="1.3" fill="#ff003c" opacity="0.75" />
-      <circle cx="35.5" cy="48.8" r="0.8" fill="white" opacity="0.65" />
+      <circle cx="37" cy="50" r="4.2" fill="#8b0020" />
+      <circle cx="37" cy="50" r="2.2" fill="#ff003c" opacity="0.8" />
+      <circle cx="35.5" cy="48.6" r="1" fill="white" opacity="0.7" />
       <ellipse cx="63" cy="50" rx="6" ry="3.5" fill="#1a0a06" />
-      <circle cx="63" cy="50" r="2.5" fill="#8b0020" />
-      <circle cx="63" cy="50" r="1.3" fill="#ff003c" opacity="0.75" />
-      <circle cx="61.5" cy="48.8" r="0.8" fill="white" opacity="0.65" />
+      <circle cx="63" cy="50" r="4.2" fill="#8b0020" />
+      <circle cx="63" cy="50" r="2.2" fill="#ff003c" opacity="0.8" />
+      <circle cx="61.5" cy="48.6" r="1" fill="white" opacity="0.7" />
 
       {/* Cheek mass */}
       <ellipse cx="30" cy="56" rx="10" ry="7" fill="#2e1a10" opacity="0.6" />
