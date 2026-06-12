@@ -19,6 +19,9 @@ import SyncScoreModal from './components/SyncScoreModal'
 import { useDebtStore } from './hooks/useDebtStore'
 import { usePlaidSync } from './hooks/usePlaidSync'
 import PlaidMappingModal from './components/PlaidMappingModal'
+import RobinhoodPortfolioModal from './components/RobinhoodPortfolioModal'
+import RobinhoodHarvestModal from './components/RobinhoodHarvestModal'
+import AutopayCalendarModal from './components/AutopayCalendarModal'
 import { PHASES } from './constants'
 
 const MILESTONES = [25, 50, 75, 100]
@@ -35,6 +38,9 @@ export default function App() {
   const [syncScoreOpen, setSyncScoreOpen] = useState(false)
   const [addDebtOpen, setAddDebtOpen] = useState(false)
   const [aprDebt, setAprDebt] = useState(null)
+  const [showPortfolioModal, setShowPortfolioModal] = useState(false)
+  const [showHarvestModal, setShowHarvestModal] = useState(false)
+  const [showAutopayCalendar, setShowAutopayCalendar] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try { return !localStorage.getItem('hasSeenOnboarding') } catch { return false }
   })
@@ -101,6 +107,11 @@ export default function App() {
         onImport={store.importState}
         onShowIntro={() => setShowOnboarding(true)}
         plaid={plaid}
+        robinhoodStatus={store.robinhoodStatus}
+        totalAutopayCommitted={store.totalAutopayCommitted}
+        onReadPortfolio={() => setShowPortfolioModal(true)}
+        onHarvestOpportunities={() => setShowHarvestModal(true)}
+        onShowAutopayCalendar={() => setShowAutopayCalendar(true)}
       />
       {plaid.showMappingModal && (
         <PlaidMappingModal
@@ -178,6 +189,34 @@ export default function App() {
           onClose={() => setSyncScoreOpen(false)}
         />
       )}
+      {showPortfolioModal && (
+        <RobinhoodPortfolioModal
+          status={store.robinhoodStatus}
+          onClose={() => setShowPortfolioModal(false)}
+        />
+      )}
+      {showHarvestModal && (
+        <RobinhoodHarvestModal
+          status={store.robinhoodStatus}
+          activeTarget={store.activeTarget}
+          splitPref={store.harleyDefiSplit}
+          onSaveSplit={split => { store.setHarleyDefiSplit(split); addToast('SPLIT PREFERENCE SAVED', 'gold') }}
+          onLogHarvest={(ticker, amount, targetDebt) => {
+            store.logHarvestPlan(ticker, amount, targetDebt)
+            addToast(`HARVEST PLANNED: $${amount.toFixed(2)} from ${ticker}`, 'gold')
+          }}
+          onClose={() => setShowHarvestModal(false)}
+        />
+      )}
+      {showAutopayCalendar && (
+        <AutopayCalendarModal
+          debts={store.debts}
+          onUpdateDueDay={(debtId, dueDay) => store.setAutopayDueDay(debtId, dueDay)}
+          autopayThreshold={store.autopayThreshold}
+          onSetThreshold={store.setAutopayThreshold}
+          onClose={() => setShowAutopayCalendar(false)}
+        />
+      )}
 
       {isDashboard ? (
         <main className="app-main">
@@ -198,6 +237,11 @@ export default function App() {
             {store.freedUpMinimums > 0 && (
               <p className="snowball-line">
                 ▲ SNOWBALL FREED: ${store.freedUpMinimums.toFixed(2)}/mo
+              </p>
+            )}
+            {store.totalAutopayCommitted > 0 && (
+              <p className="autopay-total-line">
+                ◈ TOTAL AUTOPAY COMMITTED: ${store.totalAutopayCommitted.toFixed(2)}/mo
               </p>
             )}
           </header>
@@ -262,6 +306,7 @@ export default function App() {
                     onEdit={() => setEditingDebt(debt)}
                     onUpdateMinPayment={amt => store.updateMinPayment(debt.id, amt)}
                     onSetApr={setAprDebt}
+                    onSetAutopay={(enabled, amount) => store.setAutopay(debt.id, enabled, amount)}
                   />
                 ))}
               </div>

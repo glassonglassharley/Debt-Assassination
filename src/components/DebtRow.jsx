@@ -1,8 +1,10 @@
 import { useState } from 'react'
 
-export default function DebtRow({ debt, rank, isActive, onPay, onEdit, onUpdateMinPayment, onSetApr }) {
+export default function DebtRow({ debt, rank, isActive, onPay, onEdit, onUpdateMinPayment, onSetApr, onSetAutopay }) {
   const [editMin, setEditMin] = useState(false)
   const [minVal, setMinVal] = useState('')
+  const [editAutopay, setEditAutopay] = useState(false)
+  const [autopayVal, setAutopayVal] = useState('')
 
   const isPaid = debt.balance <= 0
   const isOverLimit = debt.balance > debt.limit
@@ -16,6 +18,22 @@ export default function DebtRow({ debt, rank, isActive, onPay, onEdit, onUpdateM
     onUpdateMinPayment(minVal)
     setEditMin(false)
     setMinVal('')
+  }
+
+  const saveAutopay = () => {
+    const amt = parseFloat(autopayVal)
+    onSetAutopay?.(true, isNaN(amt) || amt <= 0 ? null : amt)
+    setEditAutopay(false)
+    setAutopayVal('')
+  }
+
+  const toggleAutopay = () => {
+    if (debt.autopayEnabled) {
+      onSetAutopay?.(false, null)
+    } else {
+      setAutopayVal(debt.autopayAmount || '')
+      setEditAutopay(true)
+    }
   }
 
   if (isPaid) {
@@ -114,6 +132,35 @@ export default function DebtRow({ debt, rank, isActive, onPay, onEdit, onUpdateM
         <button className="btn-chip" onClick={() => onSetApr?.(debt)}>
           {debt.apr != null ? `✎ ${debt.apr}% APR` : '+ APR'}
         </button>
+
+        {editAutopay ? (
+          <div className="inline-edit-wrap">
+            <input
+              className="inline-input"
+              type="number"
+              min="0"
+              placeholder="AUTOPAY $"
+              value={autopayVal}
+              onChange={e => setAutopayVal(e.target.value)}
+              autoFocus
+              onKeyDown={e => e.key === 'Enter' && saveAutopay()}
+            />
+            <button className="btn-inline-save" onClick={saveAutopay}>✓</button>
+            <button className="btn-inline-save" style={{ background: 'transparent', color: 'var(--muted)' }} onClick={() => setEditAutopay(false)}>✕</button>
+          </div>
+        ) : debt.autopayEnabled ? (
+          <span
+            className="debt-autopay-badge"
+            onClick={() => { setAutopayVal(debt.autopayAmount || ''); setEditAutopay(true) }}
+            title="Click to edit autopay amount"
+          >
+            AUTO ${debt.autopayAmount || 0}/MO ✎
+          </span>
+        ) : (
+          <button className="btn-chip" onClick={toggleAutopay}>
+            + AUTOPAY
+          </button>
+        )}
       </div>
     </div>
   )

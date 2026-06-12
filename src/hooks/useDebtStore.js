@@ -73,6 +73,9 @@ function buildInitialDebts() {
     minPayment: null,
     apr: null,
     enemyName: VILLAIN_DATA[d.id]?.name ?? d.lender,
+    autopayEnabled: false,
+    autopayAmount: null,
+    autopayDueDay: null,
   }))
 }
 
@@ -115,10 +118,18 @@ function getInitialState() {
   if (Array.isArray(saved?.debts) && saved.debts.length >= BASE_DEBT_COUNT) {
     return {
       ...saved,
-      debts: withEnemyNames(saved.debts),
+      debts: withEnemyNames(saved.debts.map(d => ({
+        autopayEnabled: false,
+        autopayAmount: null,
+        autopayDueDay: null,
+        ...d,
+      }))),
       creditScore: Number.isFinite(saved.creditScore) ? saved.creditScore : DEFAULT_CREDIT_SCORE,
       lastSynced: saved.lastSynced || DEFAULT_LAST_SYNCED,
       scoreHistory: Array.isArray(saved.scoreHistory) ? saved.scoreHistory : [],
+      robinhoodStatus: saved.robinhoodStatus || 'pending',
+      harleyDefiSplit: saved.harleyDefiSplit || { debt: 50, tax: 30, reinvest: 20 },
+      autopayThreshold: saved.autopayThreshold ?? null,
     }
   }
   return {
@@ -133,6 +144,9 @@ function getInitialState() {
     gridIntegrity: DEFAULT_CREDIT_SCORE,
     projectedScore: 765,
     lastSynced: DEFAULT_LAST_SYNCED,
+    robinhoodStatus: 'pending',
+    harleyDefiSplit: { debt: 50, tax: 30, reinvest: 20 },
+    autopayThreshold: null,
   }
 }
 
@@ -159,8 +173,11 @@ export function useDebtStore() {
       if (!d.apr || d.balance <= 0) return sum
       return sum + ((d.apr / 100) / 365) * d.balance
     }, 0)
+    const totalAutopayCommitted = state.debts
+      .filter(d => d.autopayEnabled && d.autopayAmount && d.balance > 0)
+      .reduce((s, d) => s + (d.autopayAmount || 0), 0)
     const scoreMetrics = getScoreMetrics(state.debts, state.creditScore)
-    return { totalOriginalDebt, totalRemaining, totalPaid, cardsKilled, percentComplete, activeTarget, rankedDebts, freedUpMinimums, totalDailyInterest, totalDailyDamage: totalDailyInterest, ...scoreMetrics }
+    return { totalOriginalDebt, totalRemaining, totalPaid, cardsKilled, percentComplete, activeTarget, rankedDebts, freedUpMinimums, totalDailyInterest, totalDailyDamage: totalDailyInterest, totalAutopayCommitted, ...scoreMetrics }
   }, [state.debts, state.creditScore])
 
   function makePayment(debtId, amount) {
@@ -347,6 +364,66 @@ export function useDebtStore() {
     }
   }
 
+  function batchUpdateFromPlaid(updates) {
+    // updates: [{ debtId, balance?, apr?, minPayment? }]
+    const changed = []
+    const newDebts = state.debts.map(d => {
+      const u = updates.find(x => x.debtId === d.id)
+      if (!u) return d
+      const prev = { balance: d.balance, apr: d.apr, minPayment: d.minPayment }
+      const next = {
+        ...d,
+        balance: u.balance !== undefined ? Math.max(0, parseFloat(u.balance) || 0) : d.balance,
+        apr: u.apr !== undefined ? (parseFloat(u.apr) || null) : d.apr,
+        minPayment: u.minPayment !== undefined ? (parseFloat(u.minPayment) || null) : d.minPayment,
+      }
+      if (prev.balance !== next.balance || prev.apr !== next.apr || prev.minPayment !== next.minPayment) {
+        changed.push({ debt: next, prev })
+      }
+      return next
+    })
+    if (changed.length > 0) persist({ ...state, debts: newDebts })
+    return changed
+  }
+
+  function setAutopay(debtId, enabled, amount) {
+    const newDebts = state.debts.map(d =>
+      d.id === debtId ? { ...d, autopayEnabled: enabled, autopayAmount: enabled ? (parseFloat(amount) || null) : null } : d
+    )
+    persist({ ...state, debts: newDebts })
+  }
+
+  function setAutopayDueDay(debtId, dueDay) {
+    const newDebts = state.debts.map(d =>
+      d.id === debtId ? { ...d, autopayDueDay: dueDay } : d
+    )
+    persist({ ...state, debts: newDebts })
+  }
+
+  function setRobinhoodStatus(status) {
+    persist({ ...state, robinhoodStatus: status })
+  }
+
+  function setHarleyDefiSplit(split) {
+    persist({ ...state, harleyDefiSplit: split })
+  }
+
+  function setAutopayThreshold(threshold) {
+    persist({ ...state, autopayThreshold: threshold })
+  }
+
+  function logHarvestPlan(ticker, amount, targetDebt) {
+    const entry = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString('en-US'),
+      lender: `ROBINHOOD HARVEST PLANNED — $${amount.toFixed(2)} from ${ticker} → ${targetDebt?.lender || 'UNROUTED'}`,
+      amount,
+      balanceAfter: targetDebt ? targetDebt.balance : null,
+    }
+    const newHistory = [entry, ...state.paymentHistory].slice(0, 10)
+    persist({ ...state, paymentHistory: newHistory })
+  }
+
   function reset() {
     persist({
       debts: buildInitialDebts(),
@@ -372,6 +449,9 @@ export function useDebtStore() {
     viewMode: state.viewMode,
     installDate: state.installDate,
     lastSynced: state.lastSynced || DEFAULT_LAST_SYNCED,
+    robinhoodStatus: state.robinhoodStatus || 'pending',
+    harleyDefiSplit: state.harleyDefiSplit || { debt: 50, tax: 30, reinvest: 20 },
+    autopayThreshold: state.autopayThreshold ?? null,
     ...derived,
     importState,
     makePayment,
@@ -384,6 +464,13 @@ export function useDebtStore() {
     markMilestoneShown,
     setViewMode,
     logCounterattack,
+    batchUpdateFromPlaid,
+    setAutopay,
+    setAutopayDueDay,
+    setRobinhoodStatus,
+    setHarleyDefiSplit,
+    setAutopayThreshold,
+    logHarvestPlan,
     reset,
   }
 }

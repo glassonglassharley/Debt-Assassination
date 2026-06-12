@@ -51,7 +51,7 @@ const FAQ = [
   },
 ]
 
-export default function HamburgerMenu({ addToast, onImport, onShowIntro, plaid }) {
+export default function HamburgerMenu({ addToast, onImport, onShowIntro, plaid, robinhoodStatus, totalAutopayCommitted, onReadPortfolio, onHarvestOpportunities, onShowAutopayCalendar }) {
   const [open, setOpen] = useState(false)
   const [pasteVal, setPasteVal] = useState('')
   const [connecting, setConnecting] = useState(false)
@@ -199,6 +199,49 @@ export default function HamburgerMenu({ addToast, onImport, onShowIntro, plaid }
                   </button>
                 </>
               )}
+            </div>
+          </div>
+
+          {/* Robinhood Agent section */}
+          <div className="faq-section">
+            <div className="rh-section-header">
+              <span className="rh-section-title">⚡ ROBINHOOD AGENT</span>
+              <span className="rh-section-sub">AGENTIC TRADING — BETA</span>
+            </div>
+            <div className="rh-status-pill-wrap">
+              <span className={`rh-status-pill ${robinhoodStatus === 'active' ? 'rh-pill-active' : ''}`}>
+                AGENTIC ACCESS: {robinhoodStatus === 'active' ? 'ACTIVE' : 'PENDING'}
+              </span>
+            </div>
+            <div className="drawer-data-section">
+              <button className="drawer-data-btn rh-read-btn" onClick={() => { close(); onReadPortfolio?.() }}>
+                READ PORTFOLIO
+              </button>
+              <button className="drawer-data-btn rh-harvest-btn" onClick={() => { close(); onHarvestOpportunities?.() }}>
+                HARVEST OPPORTUNITIES
+              </button>
+              <button
+                className="drawer-data-btn muted-btn"
+                onClick={handleSync}
+                disabled={plaid?.isSyncing || !plaid?.isConnected}
+              >
+                {plaid?.isSyncing ? '⟳ SYNCING...' : '⟳ SYNC AFTER PAYMENT'}
+              </button>
+              <p className="drawer-data-hint">Use after autopay pulls to update balances.</p>
+            </div>
+          </div>
+
+          {/* Autopay Calendar section */}
+          <div className="faq-section">
+            <div className="faq-category">AUTOPAY CALENDAR</div>
+            <div className="drawer-data-section">
+              {totalAutopayCommitted > 0 && (
+                <div className="autopay-committed-label">TOTAL COMMITTED: ${totalAutopayCommitted.toFixed(2)}/MO</div>
+              )}
+              <button className="drawer-data-btn muted-btn" onClick={() => { close(); onShowAutopayCalendar?.() }}>
+                ◈ VIEW AUTOPAY SCHEDULE
+              </button>
+              <p className="drawer-data-hint">Track when money needs to land before autopay pulls.</p>
             </div>
           </div>
 
