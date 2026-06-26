@@ -229,11 +229,29 @@ export function useDebtStore() {
   }
 
   function editBalance(debtId, newBalance) {
+    const debt = state.debts.find(d => d.id === debtId)
+    if (!debt) return null
     const clamped = Math.max(0, parseFloat(newBalance) || 0)
+    const previousBalance = Number(debt.balance) || 0
+    const delta = clamped - previousBalance
     const newDebts = state.debts.map(d =>
-      d.id === debtId ? { ...d, balance: clamped } : d
+      d.id === debtId ? { ...d, balance: clamped, originalBalance: Math.max(Number(d.originalBalance) || 0, clamped) } : d
     )
-    persist({ ...state, debts: newDebts })
+    const adjustmentEntry = Math.abs(delta) >= 0.01 ? {
+      id: Date.now(),
+      date: new Date().toLocaleDateString('en-US'),
+      lender: `BALANCE ${delta > 0 ? 'INCREASE' : 'CORRECTION'} — ${debt.lender}`,
+      amount: Math.abs(delta),
+      balanceAfter: clamped,
+    } : null
+    persist({
+      ...state,
+      debts: newDebts,
+      paymentHistory: adjustmentEntry
+        ? [adjustmentEntry, ...(state.paymentHistory || [])].slice(0, 10)
+        : state.paymentHistory,
+    })
+    return { previousBalance, newBalance: clamped, delta }
   }
 
   function updateMinPayment(debtId, amount) {

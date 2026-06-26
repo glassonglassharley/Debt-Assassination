@@ -6,10 +6,31 @@
   --white: #ffffff;
   --muted: rgba(255, 255, 255, 0.25);
   --orange: #ff7c00;
+  --cyan: #00f5ff;
+  --surface: rgba(255, 0, 60, 0.04);
+  --surface-strong: rgba(255, 0, 60, 0.08);
+  --border-soft: rgba(255, 0, 60, 0.18);
+  --text-soft: rgba(255, 255, 255, 0.7);
+  --grid-line: rgba(255, 0, 60, 0.07);
   --font-title: 'Orbitron', sans-serif;
   --font-body: 'Share Tech Mono', monospace;
   --clip-card: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
   --clip-sm: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+body.theme-light {
+  --bg: #f7f3ea;
+  --red: #b7002b;
+  --gold: #8a641c;
+  --white: #17131a;
+  --muted: rgba(23, 19, 26, 0.52);
+  --orange: #b45a00;
+  --cyan: #047e8f;
+  --surface: rgba(183, 0, 43, 0.055);
+  --surface-strong: rgba(183, 0, 43, 0.1);
+  --border-soft: rgba(183, 0, 43, 0.22);
+  --text-soft: rgba(23, 19, 26, 0.72);
+  --grid-line: rgba(183, 0, 43, 0.13);
 }
 
 /* ===================== RESET ===================== */
@@ -26,6 +47,13 @@ html, body {
 
 button { font-family: inherit; cursor: pointer; }
 input { font-family: inherit; }
+
+body.theme-light button,
+body.theme-light input,
+body.theme-light select,
+body.theme-light textarea {
+  color-scheme: light;
+}
 
 /* ===================== SCANLINE BEAM ===================== */
 .scanline-beam {
@@ -103,6 +131,19 @@ input { font-family: inherit; }
   background: var(--red);
   border-color: var(--red);
   color: var(--white);
+}
+.theme-mode-toggle {
+  border-color: rgba(201, 168, 76, 0.45);
+  color: var(--gold);
+  background: rgba(201, 168, 76, 0.06);
+}
+body.theme-light .view-toggle-btn.active {
+  color: #fff8f0;
+}
+body.theme-light .theme-mode-toggle {
+  background: rgba(255,255,255,0.58);
+  border-color: rgba(138, 100, 28, 0.42);
+  color: var(--gold);
 }
 
 /* ===================== TITLE GLITCH ===================== */
@@ -953,6 +994,29 @@ input { font-family: inherit; }
   min-height: 1.4em;
 }
 .modal-confirm .hl { color: var(--red); }
+.balance-delta-preview {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  clip-path: var(--clip-sm);
+  padding: 9px 10px;
+  margin-bottom: 10px;
+}
+.balance-delta-preview.is-increase {
+  color: var(--orange);
+  border-color: rgba(255,124,0,0.38);
+  background: rgba(255,124,0,0.08);
+}
+.balance-delta-preview.is-decrease {
+  color: var(--gold);
+  border-color: rgba(201,168,76,0.38);
+  background: rgba(201,168,76,0.08);
+}
+.modal-help-text {
+  color: var(--text-soft);
+  font-size: 0.62rem;
+  line-height: 1.45;
+  margin: 0 0 2px;
+}
 
 .modal-actions {
   display: grid;
@@ -3425,4 +3489,118 @@ input { font-family: inherit; }
   .director-input-row { flex-direction: column; }
   .director-input-row button { min-height: 42px; }
   .director-messages { max-height: 560px; }
+}
+
+/* ===================== LIGHT MODE OVERRIDES ===================== */
+body.theme-light {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(183, 0, 43, 0.12), transparent 34%),
+    radial-gradient(circle at 85% 12%, rgba(201, 168, 76, 0.16), transparent 30%),
+    var(--bg);
+}
+body.theme-light .crt-overlay {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(183, 0, 43, 0.035) 3px,
+    rgba(183, 0, 43, 0.035) 4px
+  );
+  opacity: 0.45;
+}
+body.theme-light .scanline-beam {
+  opacity: 0.45;
+}
+body.theme-light .glitch-cyan {
+  color: var(--cyan);
+}
+body.theme-light .app-title {
+  text-shadow: 0 0 7px rgba(183, 0, 43, 0.28), 0 0 18px rgba(183, 0, 43, 0.16);
+}
+body.theme-light .stat-card,
+body.theme-light .clearance-panel,
+body.theme-light .progress-wrap,
+body.theme-light .add-target-panel,
+body.theme-light .active-target,
+body.theme-light .phase-section,
+body.theme-light .debt-row,
+body.theme-light .payment-history,
+body.theme-light .protection-footer,
+body.theme-light .director-chatbot,
+body.theme-light .side-drawer,
+body.theme-light .modal-card,
+body.theme-light .mapping-card,
+body.theme-light .rh-modal-card {
+  background: rgba(255, 252, 245, 0.82);
+  border-color: rgba(183, 0, 43, 0.2);
+  box-shadow: 0 10px 28px rgba(60, 38, 20, 0.08), inset 0 0 24px rgba(255,255,255,0.32);
+}
+body.theme-light .director-chatbot {
+  background:
+    linear-gradient(135deg, rgba(183, 0, 43, 0.09), rgba(138, 100, 28, 0.09)),
+    rgba(255, 252, 245, 0.9);
+}
+body.theme-light .debt-row.is-active,
+body.theme-light .active-target {
+  background: rgba(183, 0, 43, 0.08);
+}
+body.theme-light .debt-row.is-paid {
+  background: rgba(138, 100, 28, 0.08);
+}
+body.theme-light .debt-bar-outer,
+body.theme-light .progress-track,
+body.theme-light .clearance-track {
+  background: rgba(23, 19, 26, 0.09);
+}
+body.theme-light .drawer-data-section,
+body.theme-light .faq-term,
+body.theme-light .director-message,
+body.theme-light .director-kpis span,
+body.theme-light .mapping-row,
+body.theme-light .autopay-cal-row,
+body.theme-light .rh-position-row {
+  background: rgba(255,255,255,0.58);
+  border-color: rgba(23, 19, 26, 0.09);
+}
+body.theme-light .director-message.user {
+  background: rgba(4, 126, 143, 0.08);
+  border-color: rgba(4, 126, 143, 0.22);
+}
+body.theme-light .drawer-data-hint,
+body.theme-light .protection-text,
+body.theme-light .add-target-copy,
+body.theme-light .director-message-text p,
+body.theme-light .director-summary,
+body.theme-light .director-disclaimer,
+body.theme-light .mapping-desc,
+body.theme-light .rh-modal-copy {
+  color: var(--text-soft);
+}
+body.theme-light input,
+body.theme-light textarea,
+body.theme-light select,
+body.theme-light .director-input-row input,
+body.theme-light .inline-input,
+body.theme-light .paste-textarea,
+body.theme-light .autopay-due-input,
+body.theme-light .mapping-select {
+  background: rgba(255,255,255,0.72);
+  border-color: rgba(23, 19, 26, 0.16);
+  color: var(--white);
+}
+body.theme-light .btn-execute,
+body.theme-light .btn-pay,
+body.theme-light .btn-add-target,
+body.theme-light .director-input-row button,
+body.theme-light .drawer-data-btn.gold-btn,
+body.theme-light .mapping-btn-save,
+body.theme-light .rh-execute-btn {
+  color: #fff8f0;
+}
+body.theme-light .toast,
+body.theme-light .overlimit-badge,
+body.theme-light .debt-apr-badge,
+body.theme-light .debt-daily-badge,
+body.theme-light .debt-autopay-badge {
+  box-shadow: 0 8px 18px rgba(60, 38, 20, 0.12);
 }

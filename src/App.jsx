@@ -26,9 +26,13 @@ import CreditDirectorChatbot from './components/CreditDirectorChatbot'
 import { PHASES } from './constants'
 
 const MILESTONES = [25, 50, 75, 100]
+const THEME_STORAGE_KEY = 'debt-assassination-theme'
 
 export default function App() {
   const store = useDebtStore()
+  const [themeMode, setThemeMode] = useState(() => {
+    try { return localStorage.getItem(THEME_STORAGE_KEY) || 'dark' } catch { return 'dark' }
+  })
   const [payingDebt, setPayingDebt] = useState(null)
   const [editingDebt, setEditingDebt] = useState(null)
   const [toasts, setToasts] = useState([])
@@ -45,6 +49,18 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(() => {
     try { return !localStorage.getItem('hasSeenOnboarding') } catch { return false }
   })
+
+  useEffect(() => {
+    const safeTheme = themeMode === 'light' ? 'light' : 'dark'
+    document.body.classList.toggle('theme-light', safeTheme === 'light')
+    document.body.classList.toggle('theme-dark', safeTheme === 'dark')
+    document.body.style.colorScheme = safeTheme
+    try { localStorage.setItem(THEME_STORAGE_KEY, safeTheme) } catch {}
+    return () => {
+      document.body.classList.remove('theme-light', 'theme-dark')
+      document.body.style.colorScheme = ''
+    }
+  }, [themeMode])
 
   // Milestone trigger
   useEffect(() => {
@@ -152,9 +168,9 @@ export default function App() {
         <EditBalanceModal
           debt={editingDebt}
           onSave={(id, bal) => {
-            store.editBalance(id, bal)
+            const result = store.editBalance(id, bal)
             setEditingDebt(null)
-            addToast('BALANCE UPDATED', 'red')
+            addToast(result?.delta > 0 ? 'BALANCE INCREASED' : 'BALANCE UPDATED', result?.delta > 0 ? 'red' : 'gold')
           }}
           onClose={() => setEditingDebt(null)}
         />
@@ -223,6 +239,13 @@ export default function App() {
         <main className="app-main">
           {/* View toggle */}
           <div className="view-toggle">
+            <button
+              className="view-toggle-btn theme-mode-toggle"
+              onClick={() => setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')}
+              aria-label={`Switch to ${themeMode === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {themeMode === 'dark' ? '☀ LIGHT MODE' : '☾ DARK MODE'}
+            </button>
             <button className="view-toggle-btn active">DASHBOARD</button>
             <button className="view-toggle-btn" onClick={() => store.setViewMode('battle')}>BATTLE MODE</button>
           </div>
@@ -347,6 +370,13 @@ export default function App() {
         <>
           <div className="battle-shell-header">
             <div className="view-toggle">
+              <button
+                className="view-toggle-btn theme-mode-toggle"
+                onClick={() => setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')}
+                aria-label={`Switch to ${themeMode === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {themeMode === 'dark' ? '☀ LIGHT MODE' : '☾ DARK MODE'}
+              </button>
               <button className="view-toggle-btn" onClick={() => store.setViewMode('dashboard')}>DASHBOARD</button>
               <button className="view-toggle-btn active">BATTLE MODE</button>
             </div>

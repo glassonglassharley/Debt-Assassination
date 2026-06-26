@@ -16,7 +16,8 @@ export default function GridBg() {
       const vpX = W / 2
       const vpY = H * 0.28
 
-      ctx.strokeStyle = 'rgba(255, 0, 60, 0.07)'
+      const styles = getComputedStyle(document.body)
+      ctx.strokeStyle = styles.getPropertyValue('--grid-line').trim() || 'rgba(255, 0, 60, 0.07)'
       ctx.lineWidth = 1
 
       // Radial lines from vanishing point to bottom edge
@@ -54,7 +55,12 @@ export default function GridBg() {
 
     resize()
     window.addEventListener('resize', resize)
-    return () => window.removeEventListener('resize', resize)
+    const observer = new MutationObserver(draw)
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })
+    return () => {
+      window.removeEventListener('resize', resize)
+      observer.disconnect()
+    }
   }, [])
 
   return <canvas ref={ref} className="grid-canvas" />
