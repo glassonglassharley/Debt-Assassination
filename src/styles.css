@@ -3250,3 +3250,179 @@ input { font-family: inherit; }
   background: rgba(255,124,0,0.08);
   margin-bottom: 10px;
 }
+
+/* ===================== CREDIT DIRECTOR CHATBOT ===================== */
+.director-chatbot {
+  position: relative;
+  background:
+    linear-gradient(135deg, rgba(255, 0, 60, 0.13), rgba(201, 168, 76, 0.05)),
+    rgba(4, 4, 8, 0.88);
+  border: 1px solid rgba(201, 168, 76, 0.38);
+  clip-path: var(--clip-card);
+  padding: 16px;
+  margin: 20px 0;
+  box-shadow: 0 0 24px rgba(255, 0, 60, 0.12), inset 0 0 28px rgba(201, 168, 76, 0.04);
+  overflow: hidden;
+}
+.director-chatbot::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), var(--red), transparent);
+  opacity: 0.9;
+}
+.director-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+.director-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.58rem;
+  color: var(--gold);
+  letter-spacing: 0.18em;
+  margin-bottom: 4px;
+}
+.director-title {
+  font-family: var(--font-title);
+  font-size: clamp(1rem, 4vw, 1.45rem);
+  color: var(--white);
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 14px rgba(201, 168, 76, 0.35);
+}
+.director-summary {
+  color: rgba(255,255,255,0.58);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+.director-toggle {
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,168,76,0.5);
+  color: var(--gold);
+  font-family: var(--font-title);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  padding: 8px 10px;
+  clip-path: var(--clip-sm);
+}
+.director-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 14px 0;
+}
+.director-kpis span {
+  border: 1px solid rgba(255,255,255,0.09);
+  background: rgba(0,0,0,0.2);
+  color: rgba(255,255,255,0.78);
+  font-size: 0.62rem;
+  line-height: 1.35;
+  padding: 8px;
+  clip-path: var(--clip-sm);
+}
+.director-quick-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.director-quick-prompts button {
+  background: rgba(255, 0, 60, 0.08);
+  border: 1px solid rgba(255, 0, 60, 0.28);
+  color: rgba(255,255,255,0.78);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  padding: 8px 10px;
+  clip-path: var(--clip-sm);
+}
+.director-quick-prompts button:hover,
+.director-input-row button:hover,
+.director-toggle:hover {
+  filter: brightness(1.18);
+}
+.director-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.director-message {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.035);
+  clip-path: var(--clip-sm);
+  padding: 12px;
+}
+.director-message.user {
+  border-color: rgba(0,245,255,0.25);
+  background: rgba(0,245,255,0.06);
+}
+.director-message-label {
+  color: var(--gold);
+  font-family: var(--font-title);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  margin-bottom: 8px;
+}
+.director-message.user .director-message-label { color: #00f5ff; }
+.director-message-text p {
+  color: rgba(255,255,255,0.78);
+  font-size: 0.72rem;
+  line-height: 1.55;
+  margin-bottom: 6px;
+}
+.director-message-text p:first-child {
+  color: var(--white);
+}
+.director-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.director-input-row input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--white);
+  padding: 11px 12px;
+  clip-path: var(--clip-sm);
+  font-size: 0.75rem;
+}
+.director-input-row input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(201,168,76,0.2);
+}
+.director-input-row button {
+  background: var(--gold);
+  border: none;
+  color: #040408;
+  font-family: var(--font-title);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  padding: 0 16px;
+  clip-path: var(--clip-sm);
+}
+.director-disclaimer {
+  color: rgba(255,255,255,0.38);
+  font-size: 0.58rem;
+  line-height: 1.4;
+  margin-top: 10px;
+}
+
+@media (max-width: 700px) {
+  .director-chatbot { padding: 14px 12px; }
+  .director-header { flex-direction: column; }
+  .director-toggle { width: 100%; }
+  .director-kpis { grid-template-columns: repeat(2, 1fr); }
+  .director-input-row { flex-direction: column; }
+  .director-input-row button { min-height: 42px; }
+  .director-messages { max-height: 560px; }
+}

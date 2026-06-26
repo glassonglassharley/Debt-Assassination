@@ -22,6 +22,7 @@ import PlaidMappingModal from './components/PlaidMappingModal'
 import RobinhoodPortfolioModal from './components/RobinhoodPortfolioModal'
 import RobinhoodHarvestModal from './components/RobinhoodHarvestModal'
 import AutopayCalendarModal from './components/AutopayCalendarModal'
+import CreditDirectorChatbot from './components/CreditDirectorChatbot'
 import { PHASES } from './constants'
 
 const MILESTONES = [25, 50, 75, 100]
@@ -267,6 +268,8 @@ export default function App() {
           />
 
           <ProgressBar percent={store.percentComplete} totalPaid={store.totalPaid} totalOriginalDebt={store.totalOriginalDebt} />
+
+          <CreditDirectorChatbot store={store} />
 
           <section className="add-target-panel">
             <div>
