@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { useAuth } from '@clerk/clerk-react'
 import { ORIGINAL_DEBTS, VILLAIN_DATA } from '../constants'
-import { getSessionToken } from '../lib/auth'
 
 const STORAGE_KEY = 'debt-assassination-v1'
 const DEFAULT_CREDIT_SCORE = 742
@@ -82,9 +82,13 @@ async function syncChangedDebtsAndProfile(prev, next, token) {
   }
 }
 
-async function pushPaymentToOracle(debtId, amount) {
+// getToken is Clerk's useAuth().getToken, passed in rather than imported
+// directly — this file's functions run inside a React hook, so the token
+// source needs to be wired to Clerk's React context (see useDebtStore below),
+// not read from window.Clerk, which may not exist yet at mount time.
+async function pushPaymentToOracle(debtId, amount, getToken) {
   try {
-    const token = await getSessionToken()
+    const token = await getToken()
     if (!token) return
     await oraclePost('/api/debt/payments', {
       debtId,
@@ -276,6 +280,16 @@ function getInitialState() {
 }
 
 export function useDebtStore() {
+  // useAuth (not window.Clerk/getSessionToken) deliberately — Clerk's JS
+  // loads via an async-injected script tag, so window.Clerk often doesn't
+  // exist yet on the very first render. A raw window.Clerk check in a
+  // mount-time effect loses that race and silently reads "not signed in"
+  // forever, since the effect never re-runs. useAuth is wired into React's
+  // render cycle via context, so isLoaded/isSignedIn update correctly once
+  // Clerk finishes loading or the user signs in later in the session. Same
+  // fix as usePlaidSync.js.
+  const { isLoaded, isSignedIn, getToken } = useAuth()
+
   const [state, setState] = useState(getInitialState)
   const syncTimerRef = useRef(null)
   // Baseline for the persist-diff sync — starts at whatever was already in
@@ -289,7 +303,7 @@ export function useDebtStore() {
     syncTimerRef.current = setTimeout(async () => {
       syncTimerRef.current = null
       try {
-        const token = await getSessionToken()
+        const token = await getToken()
         if (!token) return
         const prev = lastSyncedRef.current
         lastSyncedRef.current = nextState
@@ -303,13 +317,18 @@ export function useDebtStore() {
   // One-time backfill: if this browser already has local debt data the
   // first time it's ever signed in, push the whole catalog once. Guarded by
   // a localStorage flag; also idempotent via the entries/profile upserts
-  // even if this ever ran twice.
+  // even if this ever ran twice. Waits for isLoaded and re-runs if
+  // isSignedIn changes, instead of a single mount-time snapshot — signing in
+  // mid-session (not just a page that was already signed in on load) still
+  // triggers it.
   useEffect(() => {
+    if (!isLoaded) return
+    if (!isSignedIn) return
     let cancelled = false
     async function runBackfillIfNeeded() {
       try {
         if (localStorage.getItem(BACKFILL_FLAG_KEY)) return
-        const token = await getSessionToken()
+        const token = await getToken()
         if (!token || cancelled) return
         await backfillToOracle(state, token)
         if (!cancelled) localStorage.setItem(BACKFILL_FLAG_KEY, '1')
@@ -320,7 +339,7 @@ export function useDebtStore() {
     runBackfillIfNeeded()
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isLoaded, isSignedIn])
 
   function persist(next) {
     setState(next)
@@ -395,7 +414,7 @@ export function useDebtStore() {
       gridIntegrity: afterMetrics.gridIntegrity,
       projectedScore: afterMetrics.projectedScore,
     })
-    pushPaymentToOracle(debtId, actual)
+    pushPaymentToOracle(debtId, actual, getToken)
     return { cardKilled, lender: debt.lender, gridGain, gridIntegrity: afterMetrics.gridIntegrity }
   }
 
