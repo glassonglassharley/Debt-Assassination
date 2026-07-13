@@ -1,10 +1,135 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { ORIGINAL_DEBTS, VILLAIN_DATA } from '../constants'
+import { getSessionToken } from '../lib/auth'
 
 const STORAGE_KEY = 'debt-assassination-v1'
 const DEFAULT_CREDIT_SCORE = 742
 const BASE_DEBT_COUNT = ORIGINAL_DEBTS.length
 const DEFAULT_LAST_SYNCED = '2026-06-08'
+
+// Hardcoded, not env-driven — same reasoning as Training Log's oracleSync.js
+// and this app's usePlaidSync.js: this decides *where* the caller's Clerk JWT
+// can go, so it's a literal constant, never something a misconfigured env var
+// could redirect.
+const ORACLE_ORIGIN = 'https://vice-tracker-orpin.vercel.app'
+const SYNC_DEBOUNCE_MS = 1500
+const BACKFILL_FLAG_KEY = 'debt-assassination-oracle-backfilled'
+
+async function oraclePost(path, body, token) {
+  try {
+    const res = await fetch(`${ORACLE_ORIGIN}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) console.warn(`oracleSync: ${path} -> ${res.status}`)
+  } catch (err) {
+    console.warn(`oracleSync: ${path} failed: ${err.message}`)
+  }
+}
+
+function debtEntryPayload(d) {
+  return {
+    debtId: d.id,
+    lender: d.lender,
+    originalBalance: d.originalBalance,
+    balance: d.balance,
+    limit: d.limit,
+    apr: d.apr,
+    minPayment: d.minPayment,
+    autopayEnabled: d.autopayEnabled,
+    autopayAmount: d.autopayAmount,
+    autopayDueDay: d.autopayDueDay,
+    source: 'debt-assassination',
+  }
+}
+
+function profilePayload(s) {
+  return {
+    creditScore: s.creditScore,
+    playerHealth: s.playerHealth,
+    harleyDefiSplit: s.harleyDefiSplit,
+  }
+}
+
+function debtChanged(prevDebt, nextDebt) {
+  if (!prevDebt) return true
+  return prevDebt.balance !== nextDebt.balance ||
+    prevDebt.originalBalance !== nextDebt.originalBalance ||
+    prevDebt.limit !== nextDebt.limit ||
+    prevDebt.apr !== nextDebt.apr ||
+    prevDebt.minPayment !== nextDebt.minPayment ||
+    prevDebt.autopayEnabled !== nextDebt.autopayEnabled ||
+    prevDebt.autopayAmount !== nextDebt.autopayAmount ||
+    prevDebt.autopayDueDay !== nextDebt.autopayDueDay ||
+    prevDebt.lender !== nextDebt.lender
+}
+
+// Diffs against the last state we actually synced (not just the previous
+// render) so a burst of debounced persists still catches every debt that
+// changed across the whole burst, not just the final one.
+async function syncChangedDebtsAndProfile(prev, next, token) {
+  const prevDebts = new Map((prev?.debts || []).map(d => [d.id, d]))
+  const changed = (next.debts || []).filter(d => debtChanged(prevDebts.get(d.id), d))
+  await Promise.allSettled(changed.map(d => oraclePost('/api/debt/entries', debtEntryPayload(d), token)))
+
+  const profileChanged = !prev ||
+    prev.creditScore !== next.creditScore ||
+    prev.playerHealth !== next.playerHealth ||
+    JSON.stringify(prev.harleyDefiSplit || {}) !== JSON.stringify(next.harleyDefiSplit || {})
+  if (profileChanged) {
+    await oraclePost('/api/debt/profile', profilePayload(next), token)
+  }
+}
+
+async function pushPaymentToOracle(debtId, amount) {
+  try {
+    const token = await getSessionToken()
+    if (!token) return
+    await oraclePost('/api/debt/payments', {
+      debtId,
+      amount,
+      paidAt: new Date().toISOString(),
+      source: 'debt-assassination',
+    }, token)
+  } catch (err) {
+    console.warn(`oracleSync: payment push failed: ${err.message}`)
+  }
+}
+
+// debt-assassination doesn't store a debtId on paymentHistory rows (only a
+// display lender string, sometimes decorated e.g. "BALANCE CORRECTION — X" /
+// "ENEMY ATTACK — X" for non-payment events) — resolve back to a real debt by
+// exact lender match, and only backfill the entries that resolve cleanly.
+// Decorated non-payment rows deliberately never match and are skipped, so
+// they don't pollute Oracle's payment ledger.
+function resolveDebtIdByLender(lenderName, debts) {
+  const match = debts.find(d => d.lender === lenderName)
+  return match ? match.id : null
+}
+
+async function backfillToOracle(state, token) {
+  await Promise.allSettled((state.debts || []).map(d =>
+    oraclePost('/api/debt/entries', debtEntryPayload(d), token)))
+
+  await oraclePost('/api/debt/profile', profilePayload(state), token)
+
+  const genuinePayments = (state.paymentHistory || [])
+    .map(p => ({ ...p, debtId: resolveDebtIdByLender(p.lender, state.debts) }))
+    .filter(p => p.debtId != null && p.amount > 0)
+  await Promise.allSettled(genuinePayments.map(p => oraclePost('/api/debt/payments', {
+    debtId: p.debtId,
+    amount: p.amount,
+    paidAt: p.date,
+    source: 'debt-assassination-backfill',
+  }, token)))
+
+  await Promise.allSettled((state.scoreHistory || []).map(e => oraclePost('/api/debt/score', {
+    score: e.gridIntegrity,
+    recordedAt: e.date,
+    source: 'debt-assassination-backfill',
+  }, token)))
+}
 
 const CLEARANCE_TIERS = [
   { name: 'INITIATE', min: 300 },
@@ -152,10 +277,55 @@ function getInitialState() {
 
 export function useDebtStore() {
   const [state, setState] = useState(getInitialState)
+  const syncTimerRef = useRef(null)
+  // Baseline for the persist-diff sync — starts at whatever was already in
+  // localStorage on mount, not null, so the generic per-mutation sync only
+  // ever pushes debts actually changed *during this session*. The pre-
+  // existing catalog is Step 7's job (the one-time backfill effect below).
+  const lastSyncedRef = useRef(state)
+
+  function schedulePersistSync(nextState) {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current)
+    syncTimerRef.current = setTimeout(async () => {
+      syncTimerRef.current = null
+      try {
+        const token = await getSessionToken()
+        if (!token) return
+        const prev = lastSyncedRef.current
+        lastSyncedRef.current = nextState
+        await syncChangedDebtsAndProfile(prev, nextState, token)
+      } catch (err) {
+        console.warn(`oracleSync: scheduled sync failed: ${err.message}`)
+      }
+    }, SYNC_DEBOUNCE_MS)
+  }
+
+  // One-time backfill: if this browser already has local debt data the
+  // first time it's ever signed in, push the whole catalog once. Guarded by
+  // a localStorage flag; also idempotent via the entries/profile upserts
+  // even if this ever ran twice.
+  useEffect(() => {
+    let cancelled = false
+    async function runBackfillIfNeeded() {
+      try {
+        if (localStorage.getItem(BACKFILL_FLAG_KEY)) return
+        const token = await getSessionToken()
+        if (!token || cancelled) return
+        await backfillToOracle(state, token)
+        if (!cancelled) localStorage.setItem(BACKFILL_FLAG_KEY, '1')
+      } catch (err) {
+        console.warn(`oracleSync: backfill failed: ${err.message}`)
+      }
+    }
+    runBackfillIfNeeded()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function persist(next) {
     setState(next)
     saveState(next)
+    schedulePersistSync(next)
   }
 
   const derived = useMemo(() => {
@@ -225,6 +395,7 @@ export function useDebtStore() {
       gridIntegrity: afterMetrics.gridIntegrity,
       projectedScore: afterMetrics.projectedScore,
     })
+    pushPaymentToOracle(debtId, actual)
     return { cardKilled, lender: debt.lender, gridGain, gridIntegrity: afterMetrics.gridIntegrity }
   }
 
