@@ -78,13 +78,16 @@ export default function App() {
 
   const plaid = usePlaidSync({ store, addToast })
 
+  // plaid.isConnected resolves asynchronously (Oracle status check), so this
+  // must react to it changing, not just check it once at the literal mount
+  // instant — it's virtually always still false at that exact moment.
   const didAutoSync = useRef(false)
   useEffect(() => {
     if (!didAutoSync.current && plaid.isConnected) {
       didAutoSync.current = true
       plaid.syncBalances({ silent: true })
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [plaid.isConnected]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePayment = useCallback((debtId, amount) => {
     const result = store.makePayment(debtId, amount)

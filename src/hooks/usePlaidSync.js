@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getSessionToken } from '../lib/auth'
+import { useAuth } from '@clerk/clerk-react'
 
 // Hardcoded, not env-driven — same reasoning as Training Log's oracleSync.js:
 // this decides *where* the caller's Clerk JWT can go, so it's a literal
@@ -34,6 +34,15 @@ function formatLastSync(ts) {
 }
 
 export function usePlaidSync({ store, addToast }) {
+  // useAuth (not window.Clerk/getSessionToken) deliberately — Clerk's JS
+  // loads via an async-injected script tag, so window.Clerk often doesn't
+  // exist yet on the very first render. A raw window.Clerk check in a
+  // mount-time effect loses that race and silently reads "not signed in"
+  // forever, since the effect never re-runs. useAuth is wired into React's
+  // render cycle via context, so isLoaded/isSignedIn update correctly once
+  // Clerk finishes loading or the user signs in later in the session.
+  const { isLoaded, isSignedIn, getToken } = useAuth()
+
   const [isConnected, setIsConnected] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [lastSyncTs, setLastSyncTs] = useState(() => {
@@ -50,12 +59,16 @@ export function usePlaidSync({ store, addToast }) {
 
   // Derive connection state from Oracle, not localStorage — Oracle holds the
   // actual plaid_connections row; this browser holds nothing sensitive.
+  // Re-runs whenever isLoaded/isSignedIn change, so signing in mid-session
+  // (not just a page that was already signed in on load) still triggers it.
   useEffect(() => {
+    if (!isLoaded) return
+    if (!isSignedIn) { setIsConnected(false); return }
     let cancelled = false
     async function checkStatus() {
-      const token = await getSessionToken()
-      if (!token) { if (!cancelled) setIsConnected(false); return }
       try {
+        const token = await getToken()
+        if (!token) { if (!cancelled) setIsConnected(false); return }
         const res = await fetch(`${ORACLE_ORIGIN}/api/plaid/status`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -68,11 +81,11 @@ export function usePlaidSync({ store, addToast }) {
     }
     checkStatus()
     return () => { cancelled = true }
-  }, [])
+  }, [isLoaded, isSignedIn, getToken])
 
   async function fetchLinkToken() {
     try {
-      const token = await getSessionToken()
+      const token = await getToken()
       if (!token) {
         addToast?.('SIGN IN TO CONNECT A BANK', 'red')
         return null
@@ -95,7 +108,7 @@ export function usePlaidSync({ store, addToast }) {
 
   const onLinkSuccess = useCallback(async (publicToken) => {
     try {
-      const token = await getSessionToken()
+      const token = await getToken()
       if (!token) throw new Error('Not signed in')
       const res = await fetch(`${ORACLE_ORIGIN}/api/plaid/exchange-token`, {
         method: 'POST',
@@ -112,11 +125,14 @@ export function usePlaidSync({ store, addToast }) {
       console.error('exchange-token:', err.message)
       addToast?.('CONNECTION FAILED — TRY AGAIN', 'red')
     }
-  }, [store, addToast])
+  }, [store, addToast, getToken])
 
   const runSync = useCallback(async ({ silent = false } = {}) => {
-    const token = await getSessionToken()
-    if (!token) return
+    const token = await getToken()
+    if (!token) {
+      if (!silent) addToast?.('SIGN IN TO SYNC', 'red')
+      return
+    }
 
     setIsSyncing(true)
     try {
@@ -223,7 +239,7 @@ export function usePlaidSync({ store, addToast }) {
     } finally {
       setIsSyncing(false)
     }
-  }, [store, addToast])
+  }, [store, addToast, getToken])
 
   function saveMappings(mappings) {
     const existing = JSON.parse(localStorage.getItem('plaid_account_map') || '{}')
