@@ -9,6 +9,8 @@
     "vercel-build": "vite build"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.106.0",
+    "@clerk/clerk-react": "^5.61.8",
     "plaid": "^42.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

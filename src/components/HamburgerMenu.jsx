@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { usePlaidLink } from 'react-plaid-link'
+import { useUser, SignInButton, UserButton } from '@clerk/clerk-react'
 
 const FAQ = [
   {
@@ -52,6 +53,7 @@ const FAQ = [
 ]
 
 export default function HamburgerMenu({ addToast, onImport, onShowIntro, plaid, robinhoodStatus, totalAutopayCommitted, onReadPortfolio, onHarvestOpportunities, onShowAutopayCalendar }) {
+  const { isSignedIn, user } = useUser()
   const [open, setOpen] = useState(false)
   const [pasteVal, setPasteVal] = useState('')
   const [connecting, setConnecting] = useState(false)
@@ -162,12 +164,27 @@ export default function HamburgerMenu({ addToast, onImport, onShowIntro, plaid, 
         </div>
 
         <div className="faq-list">
-          {/* Plaid bank sync section */}
+          {/* Plaid bank sync section — requires a Clerk session, everything else in
+              this app works with zero auth. Bank data is stored server-side on
+              Personal Oracle, keyed to the signed-in user, never in this browser. */}
           <div className="faq-section">
             <div className="faq-category">BANK SYNC</div>
             <div className="drawer-data-section">
-              {!plaid?.isConnected ? (
+              {!isSignedIn ? (
                 <>
+                  <SignInButton mode="modal">
+                    <button className="drawer-data-btn plaid-connect-btn">
+                      ⬡ SIGN IN TO SYNC
+                    </button>
+                  </SignInButton>
+                  <p className="drawer-data-hint">Sign in to link your bank via Plaid and auto-sync card balances.</p>
+                </>
+              ) : !plaid?.isConnected ? (
+                <>
+                  <div className="drawer-account-row">
+                    <UserButton afterSignOutUrl={window.location.href} />
+                    <span className="drawer-account-email">{user?.primaryEmailAddress?.emailAddress}</span>
+                  </div>
                   <button
                     className="drawer-data-btn plaid-connect-btn"
                     onClick={handleConnect}
@@ -179,6 +196,10 @@ export default function HamburgerMenu({ addToast, onImport, onShowIntro, plaid, 
                 </>
               ) : (
                 <>
+                  <div className="drawer-account-row">
+                    <UserButton afterSignOutUrl={window.location.href} />
+                    <span className="drawer-account-email">{user?.primaryEmailAddress?.emailAddress}</span>
+                  </div>
                   <button
                     className="drawer-data-btn plaid-sync-btn"
                     onClick={handleSync}
