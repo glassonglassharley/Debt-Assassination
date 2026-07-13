@@ -1,4 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
+import { getSessionToken } from '../lib/auth'
+
+// Hardcoded, not env-driven — same reasoning as Training Log's oracleSync.js:
+// this decides *where* the caller's Clerk JWT can go, so it's a literal
+// constant, never something a misconfigured env var could redirect.
+const ORACLE_ORIGIN = 'https://vice-tracker-orpin.vercel.app'
 
 function matchAccount(plaidAccount, debts) {
   const pName = plaidAccount.name.toLowerCase()
@@ -28,7 +34,7 @@ function formatLastSync(ts) {
 }
 
 export function usePlaidSync({ store, addToast }) {
-  const [isConnected, setIsConnected] = useState(() => !!localStorage.getItem('plaid_access_token'))
+  const [isConnected, setIsConnected] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [lastSyncTs, setLastSyncTs] = useState(() => {
     const ts = localStorage.getItem('plaid_last_sync')
@@ -42,9 +48,40 @@ export function usePlaidSync({ store, addToast }) {
   const lastSyncLabel = formatLastSync(lastSyncTs)
   const syncOverdue = lastSyncTs ? (Date.now() - lastSyncTs > 86400000) : false
 
+  // Derive connection state from Oracle, not localStorage — Oracle holds the
+  // actual plaid_connections row; this browser holds nothing sensitive.
+  useEffect(() => {
+    let cancelled = false
+    async function checkStatus() {
+      const token = await getSessionToken()
+      if (!token) { if (!cancelled) setIsConnected(false); return }
+      try {
+        const res = await fetch(`${ORACLE_ORIGIN}/api/plaid/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled) setIsConnected(!!data.connected)
+      } catch (err) {
+        console.warn('plaid status check failed:', err.message)
+      }
+    }
+    checkStatus()
+    return () => { cancelled = true }
+  }, [])
+
   async function fetchLinkToken() {
     try {
-      const res = await fetch('/api/create-link-token', { method: 'POST' })
+      const token = await getSessionToken()
+      if (!token) {
+        addToast?.('SIGN IN TO CONNECT A BANK', 'red')
+        return null
+      }
+      const res = await fetch(`${ORACLE_ORIGIN}/api/plaid/create-link-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ client_name: 'Debt Assassination' }),
+      })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setLinkToken(data.link_token)
@@ -58,46 +95,42 @@ export function usePlaidSync({ store, addToast }) {
 
   const onLinkSuccess = useCallback(async (publicToken) => {
     try {
-      const res = await fetch('/api/exchange-token', {
+      const token = await getSessionToken()
+      if (!token) throw new Error('Not signed in')
+      const res = await fetch(`${ORACLE_ORIGIN}/api/plaid/exchange-token`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ public_token: publicToken }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      localStorage.setItem('plaid_access_token', data.access_token)
       setIsConnected(true)
       addToast?.('ACCOUNTS CONNECTED — READY TO SYNC', 'gold')
       // auto-sync immediately after connecting
-      await runSync({ silent: false, tokenOverride: data.access_token })
+      await runSync({ silent: false })
     } catch (err) {
       console.error('exchange-token:', err.message)
       addToast?.('CONNECTION FAILED — TRY AGAIN', 'red')
     }
   }, [store, addToast])
 
-  const runSync = useCallback(async ({ silent = false, tokenOverride = null } = {}) => {
-    const accessToken = tokenOverride || localStorage.getItem('plaid_access_token')
-    if (!accessToken) return
+  const runSync = useCallback(async ({ silent = false } = {}) => {
+    const token = await getSessionToken()
+    if (!token) return
 
     setIsSyncing(true)
     try {
       const [balRes, liabRes] = await Promise.all([
-        fetch('/api/get-balances', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: accessToken }),
+        fetch(`${ORACLE_ORIGIN}/api/plaid/accounts`, {
+          headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch('/api/get-liabilities', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: accessToken }),
+        fetch(`${ORACLE_ORIGIN}/api/plaid/liabilities`, {
+          headers: { Authorization: `Bearer ${token}` },
         }),
       ])
 
       if (balRes.status === 401) {
-        addToast?.('SESSION EXPIRED — RECONNECT ACCOUNTS', 'red')
-        localStorage.removeItem('plaid_access_token')
+        addToast?.('SESSION EXPIRED — SIGN IN AGAIN', 'red')
         setIsConnected(false)
         return
       }
@@ -133,8 +166,8 @@ export function usePlaidSync({ store, addToast }) {
 
         const liab = liabMap[acct.account_id]
         const update = { debtId: debt.id, prevBalance: debt.balance }
-        if (acct.balances.current !== null && acct.balances.current !== undefined) {
-          update.balance = acct.balances.current
+        if (acct.balance !== null && acct.balance !== undefined) {
+          update.balance = acct.balance
         }
         if (liab?.aprs?.length) {
           const pApr = liab.aprs.find(a => a.apr_type === 'purchase_apr')
@@ -200,14 +233,18 @@ export function usePlaidSync({ store, addToast }) {
     runSync({ silent: false })
   }
 
+  // Local-only: clears this browser's sync cache/mapping, doesn't revoke the
+  // Plaid item on Oracle's side. plaid_connections is shared with Vice
+  // Tracker for this same user, so deleting it here would also break Vice
+  // Tracker's bank sync — that cross-app action needs its own explicit UI,
+  // not a side effect of this button.
   function disconnect() {
-    localStorage.removeItem('plaid_access_token')
     localStorage.removeItem('plaid_last_sync')
     localStorage.removeItem('plaid_account_map')
     setIsConnected(false)
     setLastSyncTs(null)
     setLinkToken(null)
-    addToast?.('ACCOUNTS DISCONNECTED', 'red')
+    addToast?.('DISCONNECTED FROM THIS DEVICE — BANK LINK STAYS ACTIVE ON ORACLE', 'red')
   }
 
   return {
